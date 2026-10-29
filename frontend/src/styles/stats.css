@@ -1,0 +1,140 @@
+/* MỚI SỬA: toàn bộ màu trong file này đã đổi từ mã màu gõ cứng sang biến màu của theme.css
+   (--color-text, --color-text-secondary, --color-border-light...) để tự đổi theo giao diện Sáng/Tối/Ấm/Xanh */
+
+/* ===== Ô hiển thị % lớn ===== */
+.stats-percent-box {
+  text-align: center;
+  margin-bottom: 8px;
+}
+
+.stats-percent-number {
+  font-size: 36px;
+  font-weight: 700;
+  color: var(--color-accent);
+  line-height: 1.1;
+}
+
+.stats-percent-label {
+  font-size: 12.5px;
+  color: var(--color-text-secondary);
+  margin-top: 2px;
+}
+
+/* ===== Chú thích màu ===== */
+.stats-legend {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  margin: 12px 0 24px;
+  font-size: 12px;
+  color: var(--color-text);
+}
+
+.stats-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.stats-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+/* ===== Bảng đóng góp thành viên ===== */
+.stats-contribution-title {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  margin-bottom: 12px;
+  border-top: 1px solid var(--color-border-light);
+  padding-top: 16px;
+}
+
+.contribution-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.contribution-name {
+  font-size: 13px;
+  color: var(--color-text);
+  width: 90px;
+  flex-shrink: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Thanh progress chia 3 đoạn màu nằm liền nhau theo chiều ngang */
+.contribution-bar-track {
+  flex: 1;
+  min-width: 0; /* bắt buộc để flex item co lại đúng, tránh đẩy vỡ layout */
+  height: 6px;
+  background: var(--color-surface-subtle-2);
+  border-radius: 999px;
+  overflow: hidden;
+  display: flex;
+}
+
+.contribution-segment {
+  height: 100%;
+  transition: width 0.3s ease;
+}
+
+.contribution-detail {
+  font-size: 11px;
+  color: var(--color-text-secondary);
+  width: 100px;
+  text-align: right;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+/* ===== Phần mở rộng khi bấm vào biểu đồ/thành viên ===== */
+.stats-expanded {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--color-border-light);
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.stats-expanded-title {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--color-text);
+  margin-bottom: 10px;
+}
+
+.expanded-task-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 0;
+  font-size: 12.5px;
+}
+
+.expanded-task-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.expanded-task-title {
+  flex: 1;
+  color: var(--color-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.expanded-task-assignee {
+  color: var(--color-text-muted);
+  flex-shrink: 0;
+}

@@ -1,0 +1,221 @@
+/* Phần đầu panel: nút quay lại + tiêu đề nằm cùng bên trái */
+.chatbox-header-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.chatbox-title {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Nút "‹" quay lại danh sách trò chuyện */
+.chatbox-back-btn {
+  width: 30px;
+  height: 30px;
+  flex-shrink: 0;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--color-text);
+  font-size: 24px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.chatbox-back-btn:hover {
+  background: var(--color-surface-subtle-2);
+}
+
+/* Khung chứa danh sách - chiếm phần còn lại của panel, tự cuộn khi dài */
+.chatlist {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px 14px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* Tiêu đề từng mục: "Nhóm chat", "Nhắn riêng" */
+.chatlist-section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 14px 4px 2px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+/* Nút nhỏ "+ Tạo nhóm" */
+.chatlist-add-btn {
+  padding: 4px 10px;
+  border: 1.5px solid var(--color-border);
+  border-radius: 8px;
+  background: var(--color-surface);
+  color: var(--color-accent);
+  font-size: 12.5px;
+  font-weight: 600;
+  letter-spacing: 0;
+  text-transform: none;
+  cursor: pointer;
+}
+
+.chatlist-add-btn:hover {
+  border-color: var(--color-accent);
+}
+
+/* Mỗi dòng là 1 cuộc trò chuyện hoặc 1 người */
+.chatlist-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 10px 12px;
+  border: 1.5px solid transparent;
+  border-radius: 10px;
+  background: var(--color-surface);
+  color: var(--color-text);
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+}
+
+.chatlist-row:hover {
+  border-color: var(--color-border);
+  background: var(--color-surface-subtle-2);
+}
+
+.chatlist-row:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Ảnh đại diện tròn có chữ cái đầu */
+.chatlist-avatar {
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: var(--color-accent);
+  color: #FFFFFF;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+/* Nhóm chat: ảnh đại diện bo vuông để phân biệt với người */
+.chatlist-avatar-group {
+  border-radius: 10px;
+}
+
+.chatlist-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.chatlist-name {
+  font-size: 14.5px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.chatlist-sub {
+  font-size: 12px;
+  color: var(--color-text-muted);
+}
+
+/* Nhãn nhỏ "Giảng viên" trong màn hình chọn thành viên */
+.chatlist-tag {
+  margin-left: auto;
+  padding: 2px 8px;
+  border-radius: 6px;
+  background: var(--color-surface-subtle-2);
+  color: var(--color-text-muted);
+  font-size: 11.5px;
+  font-weight: 600;
+}
+
+/* Chấm số tin chưa đọc bên phải mỗi dòng */
+.chatlist-badge {
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  flex-shrink: 0;
+  border-radius: 10px;
+  background: var(--color-accent);
+  color: #FFFFFF;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11.5px;
+  font-weight: 700;
+}
+
+.chatlist-empty {
+  padding: 6px 4px;
+  font-size: 13px;
+  color: var(--color-text-muted);
+}
+
+/* ===== Màn hình tạo nhóm chat ===== */
+.chatlist-form-title {
+  margin: 4px 4px 8px;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.chatlist-input {
+  padding: 10px 14px;
+  font-size: 14.5px;
+  border: 1.5px solid var(--color-border);
+  border-radius: 8px;
+  outline: none;
+  background: var(--color-surface);
+  color: var(--color-text);
+}
+
+.chatlist-input:focus {
+  border-color: var(--color-accent);
+}
+
+/* Khung danh sách người để tick chọn - cuộn riêng khi nhiều người */
+.chatlist-picker {
+  margin-top: 8px;
+  max-height: 300px;
+  overflow-y: auto;
+  border: 1.5px solid var(--color-border);
+  border-radius: 10px;
+}
+
+.chatlist-pick-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  font-size: 14px;
+  color: var(--color-text);
+  cursor: pointer;
+}
+
+.chatlist-pick-row:hover {
+  background: var(--color-surface-subtle-2);
+}
+
+.chatlist-form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 12px;
+}

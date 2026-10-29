@@ -1,0 +1,406 @@
+/* ===== CSS RIÊNG cho trang Giảng viên (/supervisor) =====
+   Tách ra từ home.css để sửa giao diện Giảng viên mà không ảnh hưởng trang Home của Sinh viên.
+   Tất cả class đều bắt đầu bằng "sv-" nên không bao giờ trùng với file CSS khác. */
+
+/* ----- Khung trang ----- */
+.sv-page {
+  min-height: 100vh;
+  background: var(--color-bg, #FFFFFF);
+  font-family: 'Inter', sans-serif;
+}
+
+/* ----- Header (copy từ home.css, giữ nguyên giao diện cũ) ----- */
+.sv-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 40px;
+  background: var(--color-surface, #FFFFFF);
+  border-bottom: 1px solid var(--color-border, #E5E7EB);
+}
+
+.sv-logo {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--color-text, #151B26);
+  letter-spacing: -0.01em;
+}
+
+.sv-user-info {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  font-size: 14px;
+  color: var(--color-text, #151B26);
+}
+
+.sv-user-link {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+  color: var(--color-text-secondary, #5B6472);
+  font-size: 14px;
+  border-radius: 999px;
+  padding: 4px 10px 4px 4px;
+  transition: background 0.15s ease;
+}
+
+.sv-user-link:hover {
+  background: var(--color-surface-subtle-2, #EEF0F3);
+}
+
+.sv-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+/* Avatar dự phòng khi chưa có ảnh thật: 2 chữ cái đầu trên nền màu chủ đạo */
+.sv-avatar-fallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-accent, #FC636B);
+  color: #FFFFFF; /* chữ trắng trên nền coral, giữ cố định ở mọi theme (giống home.css) */
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.sv-logout-btn {
+  padding: 7px 14px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--color-text, #151B26);
+  background: transparent;
+  border: 1.5px solid var(--color-border, #E5E7EB);
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.sv-logout-btn:hover {
+  border-color: var(--color-accent, #FC636B);
+  color: var(--color-accent, #FC636B);
+}
+
+/* ----- Nội dung ----- */
+.sv-content {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 48px 24px;
+}
+
+.sv-content-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 32px;
+}
+
+.sv-title {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--color-text, #151B26);
+  margin: 0;
+  letter-spacing: -0.01em;
+}
+
+.sv-empty {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--color-text-muted, #8A93A0);
+}
+
+/* ----- Thẻ nhóm (giữ kiểu cũ; bước sau sẽ thêm tiến độ, trễ hạn vào thẻ) ----- */
+.sv-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 16px;
+}
+
+.sv-card {
+  background: var(--color-surface, #FFFFFF);
+  border: 1px solid var(--color-border, #E5E7EB);
+  border-radius: 10px;
+  padding: 18px;
+  cursor: pointer;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.sv-card:hover {
+  border-color: var(--color-accent, #FC636B);
+  /* MỚI SỬA: home.css viết cứng rgba(252,99,107,...); ở đây trộn từ biến theme để đổi màu chủ đạo vẫn đúng */
+  box-shadow: 0 2px 10px color-mix(in srgb, var(--color-accent, #FC636B) 14%, transparent);
+}
+
+.sv-card-name {
+  font-size: 15.5px;
+  font-weight: 700;
+  color: var(--color-text, #151B26);
+  margin: 0 0 6px;
+}
+
+.sv-card-desc {
+  font-size: 13px;
+  color: var(--color-text-secondary, #5B6472);
+  margin: 0 0 14px;
+  min-height: 20px;
+}
+
+.sv-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 12.5px;
+  color: var(--color-text-muted, #8A93A0);
+}
+
+/* MỚI SỬA: trước đây class "role-badge supervisor" không có luật nào cho ".supervisor" nên huy hiệu không có nền; nay có nền nhạt */
+.sv-role-badge {
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  background: var(--color-accent-soft-bg, #FFF0F1);
+  color: var(--color-accent-hover, #E5484F);
+}
+
+/* ===== MỚI THÊM: phần dùng cho bảng tổng quan (bước tiếp theo của Phiên 7) =====
+   Màu trạng thái: trễ hạn dùng biến theme; "ít hoạt động" và "đang ổn" theme chưa có biến nên dùng màu cố định,
+   chữ trong huy hiệu luôn là màu chữ của theme (đọc được ở cả theme tối), màu chỉ nằm ở chấm tròn và nền nhạt */
+
+/* Hàng thẻ số liệu */
+.sv-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.sv-stat {
+  background: var(--color-surface, #FFFFFF);
+  border: 1px solid var(--color-border, #E5E7EB);
+  border-radius: 10px;
+  padding: 14px 16px;
+}
+
+.sv-stat-label {
+  margin: 0 0 4px;
+  font-size: 12.5px;
+  color: var(--color-text-secondary, #5B6472);
+}
+
+.sv-stat-value {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--color-text, #151B26);
+}
+
+/* Thanh công cụ: các nút lọc + nút chuyển Bảng/Thẻ */
+.sv-toolbar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.sv-toolbar-spacer {
+  flex: 1;
+}
+
+.sv-chip {
+  padding: 5px 13px;
+  font-size: 13px;
+  font-family: inherit;
+  color: var(--color-text-secondary, #5B6472);
+  background: transparent;
+  border: 1px solid var(--color-border, #E5E7EB);
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.sv-chip:hover {
+  border-color: var(--color-accent, #FC636B);
+}
+
+.sv-chip-active {
+  background: var(--color-accent-soft-bg, #FFF0F1);
+  border-color: var(--color-accent-soft-border, #FBC4C8);
+  color: var(--color-text, #151B26);
+}
+
+/* Bảng danh sách nhóm */
+.sv-table-wrap {
+  overflow-x: auto; /* màn hình hẹp thì bảng cuộn ngang bên trong, không làm tràn cả trang */
+  background: var(--color-surface, #FFFFFF);
+  border: 1px solid var(--color-border, #E5E7EB);
+  border-radius: 10px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-border, #E5E7EB) transparent;
+}
+
+.sv-table {
+  width: 100%;
+  min-width: 620px;
+  border-collapse: collapse;
+}
+
+.sv-th {
+  padding: 10px 14px;
+  text-align: left;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--color-text-secondary, #5B6472);
+  border-bottom: 1px solid var(--color-border, #E5E7EB);
+  cursor: pointer;
+  user-select: none;
+}
+
+.sv-th:hover {
+  color: var(--color-text, #151B26);
+}
+
+.sv-td {
+  padding: 12px 14px;
+  font-size: 13px;
+  color: var(--color-text, #151B26);
+  border-bottom: 1px solid var(--color-border-light, #F0F2F5);
+}
+
+.sv-row {
+  cursor: pointer;
+}
+
+.sv-row:hover {
+  background: var(--color-surface-subtle, #F7F8FA);
+}
+
+.sv-row:last-child .sv-td {
+  border-bottom: none;
+}
+
+.sv-cell-name {
+  font-weight: 600;
+}
+
+.sv-cell-sub {
+  margin: 2px 0 0;
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--color-text-muted, #8A93A0);
+}
+
+/* Thanh tiến độ */
+.sv-progress {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.sv-progress-track {
+  flex: 1;
+  height: 6px;
+  min-width: 70px;
+  border-radius: 3px;
+  background: var(--color-surface-subtle-2, #EEF0F3);
+  overflow: hidden;
+}
+
+.sv-progress-fill {
+  height: 100%;
+  border-radius: 3px;
+  background: var(--color-accent, #FC636B);
+}
+
+.sv-progress-text {
+  min-width: 34px;
+  font-size: 12px;
+  color: var(--color-text-secondary, #5B6472);
+}
+
+/* Huy hiệu trạng thái: chấm màu + nền nhạt + chữ theo theme */
+.sv-status {
+  --sv-status-color: #2F9E6B;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+  color: var(--color-text, #151B26);
+  background: color-mix(in srgb, var(--sv-status-color) 16%, transparent);
+}
+
+.sv-status::before {
+  content: '';
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--sv-status-color);
+}
+
+.sv-status-late {
+  --sv-status-color: var(--color-danger, #D14343);
+}
+
+.sv-status-idle {
+  --sv-status-color: #D99A1E;
+}
+
+.sv-status-ok {
+  --sv-status-color: #2F9E6B;
+}
+
+/* MỚI THÊM (Phiên 7): thẻ nhóm kiểu mới (chế độ xem "Thẻ"): hàng đầu có tên + huy hiệu, rồi tiến độ, rồi số liệu */
+.sv-card-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.sv-card-top .sv-card-name {
+  margin: 0;
+}
+
+.sv-card .sv-progress {
+  margin-bottom: 12px;
+}
+
+.sv-card-meta {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 12.5px;
+  color: var(--color-text-secondary, #5B6472);
+}
+
+.sv-card-time {
+  margin: 6px 0 0;
+  font-size: 12px;
+  color: var(--color-text-muted, #8A93A0);
+}
+
+/* Số "việc trễ hạn" trong bảng: tô màu cảnh báo khi > 0 */
+.sv-late-count {
+  color: var(--color-danger, #D14343);
+  font-weight: 600;
+}
+
+/* Màn hình hẹp: thu lề header và nội dung cho vừa */
+@media (max-width: 640px) {
+  .sv-header {
+    padding: 14px 16px;
+  }
+
+  .sv-content {
+    padding: 28px 16px;
+  }
+}

@@ -1,0 +1,142 @@
+/* ===== MỚI THÊM (tính năng 2): nút "Nhắc nhóm" và hộp thoại nhập lời nhắn trên trang Giảng viên =====
+   Class bắt đầu bằng "rm-" để không trùng với CSS khác. Tự có khung hộp thoại riêng (không phụ thuộc home.css). */
+
+/* Nút "Nhắc nhóm" trong bảng và trong thẻ */
+.rm-btn {
+  padding: 5px 12px;
+  font-size: 12.5px;
+  font-weight: 500;
+  font-family: inherit;
+  color: var(--color-text, #151B26);
+  background: transparent;
+  border: 1px solid var(--color-border, #E5E7EB);
+  border-radius: 8px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.rm-btn:hover {
+  border-color: var(--color-accent, #FC636B);
+  color: var(--color-accent, #FC636B);
+}
+
+/* Trong thẻ nhóm: nút nằm riêng 1 dòng, cách phần trên 12px */
+.rm-btn-block {
+  margin-top: 12px;
+}
+
+/* Lớp phủ mờ và hộp thoại */
+.rm-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  box-sizing: border-box;
+  background: var(--color-overlay, rgba(0, 0, 0, 0.4));
+}
+
+.rm-box {
+  width: calc(100% - 2px);
+  max-width: 440px;
+  max-height: 85vh;
+  overflow-y: auto;
+  padding: 24px;
+  box-sizing: border-box;
+  background: var(--color-surface, #FFFFFF);
+  border: 1px solid var(--color-border, #E5E7EB);
+  border-radius: 12px;
+}
+
+.rm-title {
+  margin: 0 0 4px;
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--color-text, #151B26);
+}
+
+.rm-sub {
+  margin: 0 0 16px;
+  font-size: 13px;
+  color: var(--color-text-secondary, #5B6472);
+}
+
+.rm-textarea {
+  width: 100%;
+  min-height: 96px;
+  padding: 10px 12px;
+  box-sizing: border-box;
+  font-size: 14px;
+  font-family: inherit;
+  line-height: 1.5;
+  color: var(--color-text, #151B26);
+  background: var(--color-bg, #FFFFFF);
+  border: 1.5px solid var(--color-border, #E5E7EB);
+  border-radius: 8px;
+  resize: vertical;
+}
+
+.rm-textarea:focus {
+  outline: none;
+  border-color: var(--color-accent, #FC636B);
+}
+
+.rm-counter {
+  margin: 4px 0 0;
+  font-size: 12px;
+  text-align: right;
+  color: var(--color-text-muted, #8A93A0);
+}
+
+.rm-error {
+  margin: 10px 0 0;
+  font-size: 13px;
+  color: var(--color-danger, #D14343);
+}
+
+.rm-success {
+  margin: 0 0 4px;
+  font-size: 14px;
+  color: var(--color-text, #151B26);
+}
+
+.rm-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+/* Nút Gửi / Hủy / Đóng */
+.rm-action {
+  padding: 8px 16px;
+  font-size: 13.5px;
+  font-weight: 600;
+  font-family: inherit;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.rm-action-primary {
+  color: #FFFFFF; /* chữ trắng trên nền màu chủ đạo, giữ cố định ở mọi theme (giống btn-primary của app) */
+  background: var(--color-accent, #FC636B);
+  border: 1.5px solid var(--color-accent, #FC636B);
+}
+
+.rm-action-primary:hover:not(:disabled) {
+  background: var(--color-accent-hover, #E5484F);
+  border-color: var(--color-accent-hover, #E5484F);
+}
+
+.rm-action-secondary {
+  color: var(--color-text, #151B26);
+  background: var(--color-surface, #FFFFFF);
+  border: 1.5px solid var(--color-border, #E5E7EB);
+}
+
+.rm-action:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}

@@ -1,0 +1,306 @@
+.invite-box {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--color-accent-soft-bg);
+  border: 1px solid var(--color-accent-soft-border);
+  border-radius: 10px;
+  padding: 14px 16px;
+  margin-bottom: 24px;
+  gap: 12px; /* MỚI THÊM: khoảng cách giữa mã mời và nút Sao chép */
+  flex-wrap: wrap; /* MỚI THÊM: khi modal hẹp (zoom to) nút Sao chép tự xuống dòng thay vì bị đẩy ra ngoài mép */
+}
+
+.invite-label {
+  font-size: 11.5px;
+  color: var(--color-accent-hover);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  margin-bottom: 4px;
+  font-weight: 600;
+}
+
+.invite-code {
+  font-family: monospace;
+  font-size: 13px;
+  color: var(--color-text);
+  word-break: break-all;
+  max-width: 220px;
+  min-width: 0; /* MỚI THÊM: cho phép mã mời co lại khi hẹp, không đẩy tràn khung */
+}
+
+.member-list-title {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  margin-bottom: 12px;
+}
+
+.member-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--color-border-light);
+  position: relative;
+}
+
+.member-row:last-child {
+  border-bottom: none;
+}
+
+.member-avatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: var(--color-accent);
+  color: #FFFFFF;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.member-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.member-name {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--color-text);
+  overflow-wrap: anywhere; /* MỚI THÊM: tên dài tự xuống dòng khi hẹp, không tràn ra ngoài */
+}
+
+.member-email {
+  font-size: 12px;
+  color: var(--color-text-muted);
+  overflow-wrap: anywhere; /* MỚI THÊM: email dài tự xuống dòng khi hẹp, không tràn ra ngoài */
+}
+
+.avatar-stack {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+}
+
+.avatar-stack-item {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--color-accent);
+  color: #FFFFFF;
+  border: 2px solid var(--color-surface);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10.5px;
+  font-weight: 600;
+  margin-left: -8px;
+}
+
+.avatar-stack-item:first-child {
+  margin-left: 0;
+}
+
+.avatar-stack-more {
+  background: var(--color-surface-subtle-2);
+  color: var(--color-text);
+}
+
+.workload-warning-box {
+  background: #FFF8E6;
+  border: 1px solid #FFE0A3;
+  border-radius: 10px;
+  padding: 12px 14px;
+  margin-bottom: 20px;
+}
+
+.workload-warning-title {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: #B87300;
+  margin-bottom: 6px;
+}
+
+.workload-warning-item {
+  font-size: 12.5px;
+  /* MỚI SỬA: khung này luôn nền vàng nhạt ở MỌI theme, nên chữ phải dùng màu nâu đậm cố định -
+     trước đây dùng var(--color-text-secondary) (xám nhạt ở theme tối) nên gần như không đọc được */
+  color: #6B4F12;
+  margin-bottom: 3px;
+}
+
+.member-actions {
+  display: flex;
+  gap: 4px;
+  flex-shrink: 0; /* MỚI THÊM: 2 nút 👑 ✕ luôn giữ nguyên kích thước, không bị bóp méo khi hẹp */
+}
+
+.member-action-btn {
+  width: 26px;
+  height: 26px;
+  border-radius: 6px;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  cursor: pointer;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.member-action-btn:hover {
+  border-color: var(--color-accent);
+}
+
+.member-action-danger:hover {
+  border-color: var(--color-danger);
+  color: var(--color-danger);
+}
+
+.supervisor-section {
+  padding-top: 16px;
+  margin-bottom: 20px;
+  border-top: 1px solid var(--color-border-light);
+}
+
+.supervisor-empty {
+  font-size: 12.5px;
+  color: var(--color-text-muted);
+  font-style: italic;
+  padding: 6px 0 12px;
+}
+
+.member-avatar-supervisor {
+  background: var(--color-text);
+}
+
+.role-badge.supervisor {
+  background: var(--color-surface-subtle-2);
+  color: var(--color-text);
+  font-size: 11px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 6px;
+  white-space: nowrap;
+}
+
+.role-badge.pending {
+  background: #FFF3E0;
+  color: #B87300;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 6px;
+  white-space: nowrap;
+}
+
+.invite-unified-section {
+  padding-top: 16px;
+  margin-bottom: 8px;
+  border-top: 1px solid var(--color-border-light);
+}
+
+.invite-supervisor-form {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.invite-supervisor-form input {
+  flex: 1;
+  min-width: 0; /* MỚI THÊM: ô input trong hàng flex mặc định KHÔNG chịu co nhỏ hơn độ rộng gốc, nên khi hẹp bị tràn và nút "Mời" bị cắt mất */
+  padding: 9px 12px;
+  font-size: 13px;
+  font-family: 'Inter', sans-serif;
+  border: 1.5px solid var(--color-border);
+  border-radius: 8px;
+  outline: none;
+  box-sizing: border-box;
+  transition: border-color 0.15s ease;
+  background: var(--color-surface);
+  color: var(--color-text);
+}
+
+.invite-supervisor-form input:focus {
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 3px rgba(252,99,107,0.15);
+}
+
+.invite-supervisor-error {
+  font-size: 12px;
+  color: var(--color-danger);
+  margin-top: 8px;
+}
+
+.invite-supervisor-success {
+  font-size: 12px;
+  color: #1E8E5A;
+  margin-top: 8px;
+}
+
+/* ===== Khu vực "Vùng nguy hiểm" (Xóa nhóm) ===== */
+.danger-zone {
+  margin-top: 24px;
+  padding: 16px;
+  border: 1.5px solid var(--color-accent-soft-border);
+  border-radius: 10px;
+  background: var(--color-accent-soft-bg);
+}
+
+.danger-zone-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--color-danger);
+  margin-bottom: 8px;
+}
+
+.danger-zone-desc {
+  font-size: 12px;
+  color: var(--color-text-secondary);
+  line-height: 1.5;
+  margin: 0 0 12px;
+}
+
+.danger-zone-hint {
+  font-size: 12.5px;
+  color: var(--color-text);
+  margin: 0 0 8px;
+}
+
+.danger-zone-hint strong {
+  color: var(--color-danger);
+}
+
+.danger-zone-input {
+  width: 100%;
+  padding: 9px 12px;
+  font-size: 13px;
+  font-family: 'Inter', sans-serif;
+  border: 1.5px solid var(--color-accent-soft-border);
+  border-radius: 8px;
+  outline: none;
+  box-sizing: border-box;
+  margin-bottom: 12px;
+  transition: border-color 0.15s ease;
+  background: var(--color-surface);
+  color: var(--color-text);
+}
+
+.danger-zone-input:focus {
+  border-color: var(--color-danger);
+  box-shadow: 0 0 0 3px rgba(192,57,43,0.12);
+}
+
+.danger-zone-btn {
+  width: 100%;
+}
+
+.danger-zone-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

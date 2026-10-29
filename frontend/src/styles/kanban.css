@@ -1,0 +1,561 @@
+.group-detail-page {
+  min-height: 100vh;
+  background: var(--color-bg);
+  font-family: 'Inter', sans-serif;
+}
+
+.group-detail-header {
+  padding: 18px 40px;
+  background: var(--color-surface);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.group-detail-back {
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  text-decoration: none;
+}
+
+.group-detail-back:hover {
+  color: var(--color-accent);
+}
+
+.group-detail-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 12px;
+}
+
+.group-detail-title {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--color-text);
+  margin: 0;
+  letter-spacing: -0.01em;
+}
+
+.group-detail-content {
+  padding: 32px 40px;
+}
+
+.kanban-board {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+}
+
+.kanban-column {
+  flex: 1;
+  min-width: 260px;
+  background: var(--color-surface-subtle);
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  padding: 14px;
+  min-height: 200px;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.kanban-column[data-over="true"] {
+  background: var(--color-accent-soft-bg);
+  border-color: var(--color-accent);
+}
+
+.kanban-column-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--color-text);
+  margin-bottom: 12px;
+  padding: 0 4px;
+}
+
+.kanban-count {
+  background: var(--color-surface-subtle-2);
+  color: var(--color-text-secondary);
+  font-size: 11px;
+  padding: 1px 8px;
+  border-radius: 999px;
+}
+
+.kanban-column-body {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-height: 60px;
+}
+
+.task-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-left-width: 3px;
+  border-left-style: solid;
+  border-radius: 8px;
+  padding: 14px;
+  cursor: grab;
+  touch-action: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.task-card:hover {
+  border-color: var(--color-accent);
+  border-left-color: var(--color-accent);
+  box-shadow: 0 3px 10px rgba(0,0,0,0.06);
+}
+
+.task-card[data-dragging="true"] {
+  opacity: 0.5;
+}
+
+/* Màu độ ưu tiên giữ nguyên cố định (không đổi theo theme) - đây là màu MANG Ý NGHĨA (thấp/vừa/cao),
+   không phải màu trang trí, nên giữ cố định để không gây hiểu nhầm mức ưu tiên giữa các theme */
+.task-card[data-priority="low"] { border-left-color: #9CA0A8; }
+.task-card[data-priority="medium"] { border-left-color: #FFB84D; }
+.task-card[data-priority="high"] { border-left-color: #FC636B; }
+
+.task-card-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-text);
+  margin-bottom: 4px;
+}
+
+.task-card-desc {
+  font-size: 12.5px;
+  color: var(--color-text-secondary);
+  margin-bottom: 10px;
+}
+
+.task-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.task-priority-dot {
+  display: none;
+}
+
+.task-assignee {
+  font-size: 12px;
+  color: var(--color-text-secondary);
+}
+
+.task-assignee-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.task-mini-avatar {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--color-accent);
+  color: #FFFFFF;
+  font-size: 9px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.task-deadline-badge {
+  font-size: 10.5px;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: var(--color-surface-subtle-2);
+  color: var(--color-text-secondary);
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.task-deadline-badge.overdue {
+  background: var(--color-accent-soft-bg);
+  color: var(--color-danger);
+  font-weight: 600;
+}
+
+/* ===== Kết quả import Excel ===== */
+.import-result {
+  background: var(--color-surface-subtle);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  padding: 12px 14px;
+  margin: 14px 0;
+  font-size: 13px;
+}
+
+.import-errors {
+  margin-top: 8px;
+  color: var(--color-danger);
+}
+
+.import-errors ul {
+  margin: 6px 0 0;
+  padding-left: 18px;
+}
+
+/* ===== Tab chuyển đổi Bảng công việc / Tiến độ theo mốc ===== */
+.tab-switcher {
+  display: flex;
+  gap: 4px;
+  margin-top: 16px;
+}
+
+.tab-btn {
+  padding: 8px 4px;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  margin-right: 20px;
+}
+
+.tab-btn-active {
+  color: var(--color-accent);
+  border-bottom-color: var(--color-accent);
+}
+
+/* ===== Thanh lọc/tìm kiếm task ===== */
+.task-filter-bar {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 18px;
+}
+
+.task-filter-search {
+  flex: 1;
+  max-width: 260px;
+  padding: 8px 12px;
+  font-size: 13px;
+  border: 1.5px solid var(--color-border);
+  border-radius: 8px;
+  outline: none;
+  background: var(--color-surface);
+  color: var(--color-text);
+}
+
+.task-filter-search:focus {
+  border-color: var(--color-accent);
+}
+
+.task-filter-bar select {
+  padding: 8px 10px;
+  font-size: 13px;
+  border: 1.5px solid var(--color-border);
+  border-radius: 8px;
+  background: var(--color-surface);
+  color: var(--color-text);
+  outline: none;
+}
+
+/* ===== Nhóm nút header theo cụm, có khoảng cách và đường phân tách ===== */
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.header-action-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-right: 14px;
+  border-right: 1px solid var(--color-border);
+}
+
+.header-action-group:last-child {
+  border-right: none;
+  padding-right: 0;
+}
+
+/* ===== "Vùng" trong Bảng phân công ===== */
+.kanban-zone-list {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+.kanban-zone {
+  padding-top: 20px;
+  border-top: 1px solid var(--color-border-light);
+}
+
+.kanban-zone:first-child {
+  padding-top: 0;
+  border-top: none;
+}
+
+.kanban-zone-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.kanban-zone-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.kanban-zone-progress {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.kanban-zone-progress-track {
+  width: 100px;
+  height: 6px;
+  background: var(--color-surface-subtle-2);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.kanban-zone-progress-fill {
+  height: 100%;
+  background: var(--color-accent);
+  border-radius: 999px;
+  transition: width 0.3s ease;
+}
+
+.kanban-zone-percent {
+  font-size: 11.5px;
+  color: var(--color-text-muted);
+  white-space: nowrap;
+}
+
+/* ===== Tab "Việc cả nhóm" / "Việc của tôi" ===== */
+.task-view-switcher {
+  display: inline-flex;
+  background: var(--color-surface-subtle-2);
+  border-radius: 8px;
+  padding: 3px;
+  margin-bottom: 16px;
+  gap: 2px;
+}
+
+.task-view-btn {
+  padding: 7px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  background: none;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-family: 'Inter', sans-serif;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.task-view-btn:hover {
+  color: var(--color-text);
+}
+
+.task-view-btn-active {
+  background: var(--color-surface);
+  color: var(--color-text);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+}
+
+.task-view-btn-active:hover {
+  color: var(--color-text);
+}
+
+/* ===== Badge số tin nhắn chưa đọc trên nút "Trò chuyện" ===== */
+.chat-toggle-btn {
+  position: relative;
+}
+
+.chat-unread-badge {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  background: var(--color-accent);
+  color: #FFFFFF;
+  font-size: 10px;
+  font-weight: 700;
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1.5px solid var(--color-surface);
+  line-height: 1;
+}
+
+/* ===== MỚI THÊM: Thụt lề cho các mốc con nằm lồng bên trong mốc cha trên Kanban board =====
+   Viền trái mờ + thụt lề, cùng tinh thần với .milestone-children bên Timeline, để mắt người xem
+   nhận ra ngay "Chương 1", "Chương 2" đang nằm BÊN TRONG "Đề cương" chứ không phải các vùng ngang hàng */
+.kanban-zone-children {
+  margin-left: 28px;
+  padding-left: 20px;
+  padding-top: 20px;
+  border-left: 2px solid var(--color-border-light);
+}
+
+.kanban-zone-node {
+  margin-bottom: 8px;
+}
+
+
+
+/* ===== MỚI THÊM: cột "Làm lại" (trạng thái redo) trên Kanban ===== */
+/* Có 4 cột nên hạ chiều rộng tối thiểu mỗi cột (260 -> 220) để bảng vừa màn hình hơn */
+.kanban-column {
+  min-width: 220px;
+}
+
+/* Cột "Làm lại": viền và chữ tiêu đề màu cam (màu mang ý nghĩa nên giữ cố định ở mọi theme, giống màu độ ưu tiên).
+   :not([data-over="true"]) để khi đang kéo task vào cột này thì vẫn hiện viền nhấn coral như các cột khác */
+.kanban-column[data-status="redo"]:not([data-over="true"]) {
+  border-color: rgba(249, 115, 22, 0.55);
+}
+
+.kanban-column[data-status="redo"] .kanban-column-header {
+  color: #F97316;
+}
+
+/* Dòng "Đã làm lại N lần" trên thẻ task */
+.task-reopen-badge {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #F97316;
+  margin-bottom: 10px;
+}
+
+
+
+/* ===== MỚI THÊM: thanh lọc nâng cao + dòng tóm tắt bộ lọc ===== */
+/* Có nhiều ô lọc nên cho phép xuống dòng thay vì tràn ngang */
+.task-filter-bar {
+  flex-wrap: wrap;
+}
+
+.task-filter-search {
+  min-width: 240px;
+}
+
+.task-filter-summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin: -6px 0 18px;
+  font-size: 12.5px;
+}
+
+.task-filter-count {
+  color: var(--color-text-secondary);
+  font-weight: 600;
+  margin-right: 4px;
+}
+
+.task-filter-chip {
+  padding: 3px 10px;
+  font-size: 12px;
+  color: var(--color-text-secondary);
+  background: var(--color-surface-subtle-2);
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  cursor: pointer;
+  font-family: 'Inter', sans-serif;
+}
+
+.task-filter-chip:hover {
+  color: var(--color-accent);
+  border-color: var(--color-accent);
+}
+
+.task-filter-reset {
+  padding: 3px 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-accent);
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: 'Inter', sans-serif;
+}
+
+.task-filter-reset:hover {
+  color: var(--color-accent-hover);
+  text-decoration: underline;
+}
+
+.task-filter-empty {
+  text-align: center;
+  color: var(--color-text-muted);
+  font-size: 13.5px;
+  padding: 24px 0;
+  margin: 0;
+}
+
+/* ===== Phiên 12: trạng thái "Kiểm định" ===== */
+.kanban-board {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+
+/* Ghi chú từ chối hiện trên thẻ */
+.task-review-note {
+  margin-top: 8px;
+  padding: 6px 8px;
+  border-radius: 6px;
+  font-size: 12px;
+  line-height: 1.4;
+  color: #b45309;
+  background: color-mix(in srgb, #f97316 12%, transparent);
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+   line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Khung Kiểm định trong cửa sổ chi tiết */
+.task-review-box {
+  margin: 8px 0 14px;
+  padding: 12px;
+  border-radius: 10px;
+  border: 1px solid color-mix(in srgb, #8b5cf6 45%, transparent);
+  background: color-mix(in srgb, #8b5cf6 8%, transparent);
+}
+.task-review-box-rejected {
+  border-color: color-mix(in srgb, #f97316 50%, transparent);
+  background: color-mix(in srgb, #f97316 8%, transparent);
+}
+.task-review-title {
+  font-weight: 700;
+  font-size: 14px;
+  margin-bottom: 8px;
+}
+.task-review-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 8px;
+}
+.task-review-wait,
+.task-review-note-text {
+  margin: 0;
+  font-size: 13.5px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+}
+.task-review-meta {
+  margin-top: 6px;
+  font-size: 12px;
+  color: var(--color-text-secondary);
+}

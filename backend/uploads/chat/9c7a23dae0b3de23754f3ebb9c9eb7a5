@@ -1,0 +1,303 @@
+# Dự án: Website quản lý công việc nhóm hỗ trợ đồ án/khóa luận — PROMPT BÀN GIAO v13
+
+> File này GỘP tiến độ của nhiều phiên làm việc (v3 → v4 → v5 → v6 → v7 → v8 → v9 → v10 → v11 → v12 → v13). Đọc TOÀN BỘ trước khi làm bất cứ việc gì.
+> Người dùng phát triển dự án song song ở nhiều phiên AI khác nhau, nên **code thật trên máy người dùng có thể khác với những gì bạn biết**. Xem mục 2 (quy tắc số 1) và mục 9 (điểm còn cần xác minh — đã cập nhật ở v13).
+
+---
+
+## 1. Bối cảnh dự án
+
+Người dùng là sinh viên Kỹ thuật phần mềm (mới học), làm **Đồ án 3** (nhóm 2 người, 10–12 tuần). Đề tài: **Website quản lý công việc nhóm hỗ trợ đồ án/khóa luận** — phân công task, theo dõi tiến độ theo mốc học thuật, chat nhóm, giảng viên hướng dẫn theo dõi/nhận xét.
+
+**3 vai trò đã cam kết với giáo viên:** Sinh viên (thành viên), Trưởng nhóm (người tạo nhóm), Giảng viên hướng dẫn.
+- Trưởng nhóm/Thành viên KHÔNG lưu ở `User` mà ở bảng trung gian `GroupMember.role` (`"leader"` / `"member"`). Ai tạo nhóm tự động là leader của nhóm đó.
+- Giảng viên là 1 loại **tài khoản** (`User.role = GIANG_VIEN`), gắn với nhóm qua bảng riêng `GroupSupervisor`, KHÔNG nằm trong `GroupMember`.
+
+**Định hướng:** không bắt chước độ phức tạp của Asana/ClickUp, chỉ lấy cảm hứng thẩm mỹ. Giao diện tông Asana: nền trắng (mặc định, giờ đã hỗ trợ đổi theme), chữ `#151B26`, màu nhấn coral `#FC636B`, bo góc mềm, tối giản. Phương pháp: **Vertical Slice** (làm trọn Backend + Frontend 1 chức năng rồi mới sang cái tiếp theo). Người dùng chủ động mở rộng phạm vi rất nhiều, chấp nhận rủi ro thời gian.
+
+## 2. Quy tắc làm việc (RẤT QUAN TRỌNG — người dùng đã nhắc nhiều lần)
+
+1. **Quy tắc số 1 — luôn xin file gốc hiện tại trước khi sửa.** Không sửa dựa trên trí nhớ hay bản cũ. Người dùng thường xuyên có thêm tính năng từ phiên khác nên file trên máy đã khác. Từng xảy ra: gửi bản sửa dựa trên file cũ → ghi đè mất tính năng đã có (VD `home.css` từng bị ghi đè mất phần theme hoá, đã phát hiện và sửa lại ở v7 — xem mục 9).
+2. **Sửa file đã tồn tại → gửi TOÀN BỘ nội dung file sau khi sửa** để dán đè, không gửi diff/đoạn rời. **(v9 siết lại)** Kể cả file dài (VD `TaskDetailModal.jsx` ~400 dòng, `GroupDetail.jsx` ~330 dòng): người dùng đã yêu cầu thẳng "gửi file hoàn chỉnh" sau khi bị gửi kiểu "tìm đoạn này thay bằng đoạn kia", nên KHÔNG dùng cách tìm-thay nữa.
+3. **Mọi file liệt kê phải ghi rõ ngay đầu:** `[FILE MỚI]` (cần tạo) hoặc `[DÁN ĐÈ FILE CŨ]`, kèm đường dẫn đầy đủ bắt đầu bằng `backend/` hoặc `frontend/` (2 project có thư mục `services`/`components` trùng tên, người dùng đã nhiều lần tạo nhầm chỗ).
+4. **MỌI đoạn code đều phải có comment tiếng Việt giải thích**, không ngoại lệ. Đoạn mới/sửa ghi rõ "MỚI THÊM"/"MỚI SỬA" + lý do.
+5. **KHÔNG thêm khối "mục lục" comment ở đầu file** (đã thử, người dùng không muốn). Chỉ comment tại chỗ.
+6. **Tính năng lớn/mới lạ → hỏi 1–2 câu thiết kế trước khi code** (ai được làm gì, dữ liệu lưu sao, phạm vi). Khi người dùng trả lời "bạn nghĩ sao/cho ý kiến" → tự quyết định kèm lý do ngắn gọn, hoặc nếu có 2 hướng rõ rệt thì dùng công cụ hỏi lựa chọn (nút bấm) thay vì hỏi chay.
+7. Hướng dẫn từng bước, chậm, ngắn gọn, ít thuật ngữ. Sau mỗi bước lớn: tổng kết checklist + đưa **các bước test cụ thể** (người dùng hay hỏi "test như nào").
+8. Không tự đổi tech stack đã chốt. Người dùng hay đổi ý giữa chừng (đặc biệt về UI/CSS) — linh hoạt sửa nhanh, không phàn nàn.
+9. Khi chuyển đổi thông báo lỗi/hiển thị: giao diện 100% tiếng Việt.
+10. Khi người dùng báo lỗi kèm ảnh chụp terminal, **đọc kỹ dòng lỗi trước khi đoán nguyên nhân khác** — từng có trường hợp lỗi cú pháp đơn giản (`};s` — ký tự thừa) bị hiểu nhầm thành lỗi tính năng.
+11. **Người dùng thích code hiển thị TRỰC TIẾP trong khung chat (khối code) để copy-dán**, từng file một, mỗi file ghi rõ nhãn `[FILE MỚI]`/`[DÁN ĐÈ FILE CŨ]` + đường dẫn đầy đủ + comment tiếng Việt (giống mục 2.2–2.4). **(v9)** Người dùng đã phàn nàn khi nhận file code đính kèm tải về: KHÔNG tạo file code để tải/không dùng công cụ đính kèm cho code, chỉ gửi code trong chat. Mỗi file nên giới thiệu gọn gàng: thuộc backend hay frontend, đường dẫn, mới hay dán đè, thay đổi gì. (Ngoại lệ: tài liệu như file prompt bàn giao này thì người dùng chủ động xin file.)
+12. **Không giả định kết quả test.** Khi người dùng nói "đã test xong" mà chưa nêu kết quả → hỏi lại (nên dùng nút chọn). Chỉ ghi "đã xong/đã test đúng" vào bàn giao khi người dùng xác nhận. Khi người dùng gửi file để kiểm tra, đọc nội dung thật thay vì tin lời.
+13. **File trên máy người dùng có thể dùng xuống dòng CRLF** (VD `task.service.js`, `group.service.js`). Khi sửa file bằng script phải giữ nguyên kiểu xuống dòng, và cẩn thận với chuỗi tìm-thay nhiều dòng.
+14. **(MỚI v9) Mọi CSS mới/sửa phải dùng `var(--color-*, màu-dự-phòng)` thay vì mã màu cứng** (`#151B26`, `#F1F1F3`...), vì người dùng có chức năng đổi theme nền; màu cứng khiến chữ chìm hoặc đường kẻ trắng chói khi đổi sang theme tối.
+15. **(MỚI v9) Mọi chỗ kiểm tra quyền "thuộc nhóm" phải tính cả Giảng viên** (xem mục 10: Giảng viên không nằm trong `GroupMember`). Trong `comment.service.js` đã có helper `getRoleInGroup` làm mẫu.
+
+## 3. Tech stack & môi trường
+
+- **Backend:** Node.js + Express, kiến trúc phân lớp **Route → Middleware → Controller → Service → Repository → DB**. Prisma **v7** (bắt buộc adapter `@prisma/adapter-pg`, generator `prisma-client-js`, KHÔNG dùng `prisma-client`), PostgreSQL 18 (DB `quanly_dban`), JWT + `bcryptjs`, Joi, `multer` (upload), `exceljs`, Socket.io.
+- **Frontend:** React + Vite (JS thuần), React Router, Axios (`services/api.js` gắn token qua interceptor), `@dnd-kit/core` (PointerSensor `activationConstraint: { distance: 8 }`), `recharts`, `socket.io-client`, CSS thuần + **CSS Variables cho hệ thống theme** (xem mục 8, mục "Đổi giao diện").
+- **Máy:** Windows, VS Code, PowerShell, Node v22. Test API bằng **Postman** (Thunder Client free không upload được file).
+- **Deploy (chưa làm):** Render (backend) + Vercel (frontend) + Supabase/Neon (DB), KHÔNG dùng Render Postgres (free tier 30 ngày).
+
+## 4. Quy ước code Backend (khuôn bắt buộc cho tính năng mới)
+
+1. **Model** trong `prisma/schema.prisma` → `npx prisma migrate dev --name <tên>` → **`npx prisma generate`** (dễ quên, gây lỗi `Cannot read properties of undefined`).
+2. **Repository** — chỉ query Prisma thuần.
+3. **Service** — toàn bộ logic nghiệp vụ, `throw new AppError(msg, status)`.
+4. **Validator** — Joi, đặt tên `xxxSchema`, dùng qua `validate(schema)`.
+5. **Controller** — chỉ gọi Service, trả `{ success, data | message }`.
+6. **Route** — gắn `authMiddleware` (trừ route xem ảnh/file công khai vì thẻ `<img>` không gửi được header), nối vào `routes/index.js`.
+
+Lưu ý: route tĩnh (`/my-groups`, `/milestones/:id` ở comment) khai báo TRƯỚC route động (`/:groupId`, `/:commentId`). **Thêm route mới phải tắt hẳn terminal rồi `npm run dev` lại** (nodemon đôi khi không nhận route mới). Trước khi kết luận lỗi lạ, luôn xem terminal backend có dòng đỏ/`app crashed` không.
+
+**`routes/index.js` (đã xác nhận đúng, xem file thật ở v7):**
+```javascript
+router.use('/tasks', taskRoutes);
+router.use('/auth', authRoutes);
+router.use('/groups', groupRoutes);
+router.use('/messages', messageRoutes);
+router.use('/milestones', milestoneRoutes);
+router.use('/notifications', notificationRoutes);
+router.use('/comments', commentRoutes);
+router.use('/attachments', attachmentRoutes);
+router.use('/users', require('./user.routes'));
+router.use('/supervisors', supervisorRoutes);
+```
+
+## 5. Cấu trúc thư mục
+
+```
+DoAn3/
+├── backend/
+│   ├── prisma/schema.prisma
+│   ├── uploads/ (attachments/, chat/, avatars/ — phải tồn tại sẵn cho multer, tự tạo nếu thiếu)
+│   ├── src/
+│   │   ├── config/prisma.js              ← PrismaClient VỚI adapter PrismaPg
+│   │   ├── controllers/ services/ repositories/ validators/   (auth, task, group, milestone,
+│   │   │      message, notification, comment, attachment, supervisor, tag, user)
+│   │   ├── routes/ (mỗi module 1 file + index.js gom lại — ĐÃ XÁC NHẬN đủ /users và /supervisors)
+│   │   ├── middlewares/ (auth, validate, error)
+│   │   ├── sockets/ (chatHandler.js, socketInstance.js) — ĐÃ XÁC NHẬN tên thư mục đúng
+│   │   └── utils/ (AppError.js, decodeFileName.js)
+│   ├── server.js
+│   └── .env (DATABASE_URL, JWT_SECRET — từng bị mất nội dung do dán đè, luôn kiểm tra)
+└── frontend/src/
+    ├── pages/       Login, Register, Home, GroupDetail, ProfilePage, SupervisorDashboard
+    ├── components/  Modal, AuthLayout, Create/Join GroupModal, TaskCard, KanbanColumn, KanbanZone,
+    │                CreateTaskModal, ImportTaskModal, TaskDetailModal, TaskFilterBar, TagPicker,
+    │                MembersModal, AvatarStack, StatsModal, ChatBox, TimelineView, AddMilestoneModal,
+    │                NotificationBell, ImageLightbox, MilestoneComments (MỚI v9)
+    ├── context/     AuthContext.jsx (có updateUser), ThemeContext.jsx
+    ├── services/    api, auth, group, task, milestone, message, notification, comment, attachment,
+    │                user, tag, supervisor, socket
+    ├── styles/      theme, home (ĐÃ THEME HOÁ ở v7), kanban, members, tag, timeline, comment (ĐÃ THEME HOÁ ở v9),
+    │                stats (ĐÃ THEME HOÁ ở v8), milestone-comment (MỚI v9, dùng biến theme), notification, chat, profile
+    │                — CHƯA theme hoá: auth (Login/Register)
+    ├── App.jsx      (React Router + PrivateRoute — ĐÃ XÁC NHẬN có đủ /login /register /home
+    │                /supervisor /groups/:groupId /profile)
+    └── main.jsx     (ThemeProvider bọc AuthProvider bọc App)
+```
+
+## 6. Mô hình dữ liệu chính (schema.prisma)
+
+- `User` — `role: Role (SINH_VIEN | GIANG_VIEN)`, `avatar` (đường dẫn file trên ổ đĩa), mật khẩu băm.
+- `Group` — `inviteCode` (uuid). Quan hệ: members, supervisors, tasks, milestones, messages, tags.
+- `GroupMember` — `role` ("leader"/"member"), `status: InviteStatus (PENDING | ACCEPTED | DECLINED)`, unique `[userId, groupId]`. Vào bằng mã mời → `ACCEPTED` ngay; mời bằng email → `PENDING`.
+- `GroupSupervisor` — `status` như trên, unique `[userId, groupId]`. Tách riêng vì Giảng viên không thao tác Task/Kanban; 1 Giảng viên phụ trách nhiều nhóm.
+- `Task` — status `todo|doing|done`, priority `low|medium|high`, deadline, `milestoneId?`, `assignedTo?`, `createdBy?`, quan hệ nhiều-nhiều `tags`, **`parentTaskId?`** (self-relation `"SubtaskTree"`, Subtask chỉ sâu 1 cấp, `onDelete: Cascade` — xóa task cha tự xóa luôn subtask).
+- `Milestone` — **cây tự tham chiếu**: `parentId?` (quan hệ `"MilestoneTree"`), `order` tính riêng theo từng cấp anh em.
+- `Tag` — `groupId + name` (unique cặp), nhiều-nhiều với Task (Prisma tự tạo bảng nối).
+- `Notification` — `type`, `content`, `groupId?`, `referenceId?` (trỏ bản ghi đang chờ đồng ý), `isRead`.
+  Các `type`: `task_assigned`, `promoted_leader`, `removed_from_group`, `deadline_reminder`, `supervisor_invited`, `group_invite`. **(v9)** Thông báo "có bình luận mới trên task" và "Giảng viên vừa nhận xét mốc" đang DÙNG TẠM type `task_assigned` (chưa thêm type riêng; chưa xem `NotificationBell.jsx` có hiển thị đúng không).
+- `Comment` — `taskId?` HOẶC `milestoneId?`, `authorId`, `content`, `createdAt`. **(v9)** Đã dùng cho cả bình luận Task lẫn nhận xét Mốc. Xóa mốc → xóa luôn comment của mốc đó (xem mục 8.19).
+- `Message` — **`content?` (nullable)** + `fileName?/filePath?/fileSize?` (gửi file trong chat); `Attachment` — file đính kèm Task (cơ chế lưu file tương tự, riêng biệt).
+
+## 7. API chính (đã xác nhận)
+
+- **Auth:** `POST /auth/register` (email, password, fullName, role), `POST /auth/login`.
+- **Groups:** `POST /groups`, `GET /groups/my-groups`, `POST /groups/join`, `GET /groups/:groupId/{members|detail|workload-warnings|supervisors|tags}`, `POST /groups/:groupId/transfer-leadership`, `DELETE /groups/:groupId/members/:targetUserId`, `POST /groups/:groupId/invite` (mời gộp chung 1 email, tự nhận diện Sinh viên/Giảng viên), `POST /groups/:groupId/invite-member`, `POST /groups/:groupId/invite-supervisor` (2 route cũ, còn giữ để test riêng), **`DELETE /groups/:groupId`** (Body `{ confirmName }` — xóa cascade toàn bộ nhóm, chỉ leader).
+  - **(v9; v10: code đã có sẵn trong `group.service.js` người dùng gửi, CHƯA test bằng tài khoản Giảng viên)** `GET /groups/:groupId/detail`: đã đề xuất sửa `group.service.js → getGroupDetail` để Giảng viên (ACCEPTED) cũng xem được (trước đây trả 403 làm `MembersModal` không tải được), và Giảng viên KHÔNG thấy `inviteCode`.
+- **Tasks:** `POST /tasks` (nhận `tagNames[]`), `GET /tasks/group/:groupId` (chỉ trả task CẤP CAO, `parentTaskId: null`, kèm `subtasks[]` lồng bên trong), `GET /tasks/group/:groupId/stats` (từ v8 đếm CẢ Subtask), `PATCH /tasks/:id/{status|assign|description|tags}`, `PUT /tasks/:id` (sửa tên/độ ưu tiên/deadline/mốc), `DELETE /tasks/:id`, `POST /tasks/:id/remind`, `GET /tasks/template`, `POST /tasks/import`, **`POST /tasks/:taskId/subtasks`** (tạo Subtask, kế thừa `groupId`/`milestoneId` từ task cha). Sửa/Xóa: chỉ Trưởng nhóm HOẶC người tạo task.
+- **Comments (cập nhật v9):**
+  - `GET /comments/tasks/:taskId` → mảng comment, mỗi phần tử có thêm `authorRole` (`supervisor|leader|member`) và `isMine`. Người xem phải là thành viên/Trưởng nhóm HOẶC Giảng viên ACCEPTED của nhóm chứa task (trước v9 ai có id task cũng xem được).
+  - `POST /comments/tasks/:taskId` (Body `{ content }`) — thành viên, Trưởng nhóm, Giảng viên đều viết được; trả đúng comment vừa tạo (kèm `author`, `authorRole`, `isMine`); báo 🔔 cho người được giao task (nếu khác người viết).
+  - `GET /comments/milestones/:milestoneId` → `{ comments, canWrite }` (ai thuộc nhóm cũng xem; `canWrite = true` với Giảng viên và Trưởng nhóm).
+  - `POST /comments/milestones/:milestoneId` — CHỈ Giảng viên và Trưởng nhóm (không phải → 403). Nếu người viết là Giảng viên → báo 🔔 cho mọi thành viên ACCEPTED của nhóm.
+  - `DELETE /comments/:commentId` — chỉ tác giả (dùng chung cho comment Task và nhận xét Mốc).
+- **Milestones:** `POST /milestones` (nhận `parentId`), `GET /milestones/group/:groupId` (trả **cây**, đã tính % đệ quy GỘP cả mốc con, mỗi node kèm thêm **`tasks: [{id, title, status}]`** — danh sách task gán TRỰC TIẾP vào mốc đó, dùng để hiện tên task trong Timeline), `DELETE /milestones/:id` (chặn nếu còn mốc con; **v9:** xóa luôn nhận xét của mốc bằng `$transaction`).
+- **Notifications:** `GET /notifications`, `GET /notifications/unread-count`, `PATCH /notifications/mark-all-read`, `PATCH /notifications/:id/respond` (Body `{ action: "accept"|"decline" }`; xử lý xong thì xóa thông báo).
+- **Supervisors:** `GET /supervisors/my-groups`.
+- **Users (Profile):** `GET /users/me`, `PATCH /users/me` (đổi `fullName`), `POST /users/me/avatar` (multipart, field `avatar`), `PATCH /users/me/password` (Body `{ currentPassword, newPassword }`), `GET /users/:userId/avatar` (**công khai**, không cần token, dùng cho `<img>`).
+- **Messages (Chat):** `GET /messages/group/:groupId`, `POST /messages/group/:groupId/upload` (multipart, field `file` + field `content` không bắt buộc — Backend tự phát Socket.io sau khi lưu), `GET /messages/:messageId/file/view` (**công khai**), `GET /messages/:messageId/file/download` (cần token).
+
+## 8. Trạng thái tính năng
+
+### 📌 TÓM TẮT NHANH (v13) — đọc phần này trước
+
+**✅ ĐÃ LÀM XONG (người dùng đã test, kết quả đúng):**
+- **Nền tảng:** đăng ký/đăng nhập (chọn vai trò Sinh viên/Giảng viên), tạo nhóm / tham gia bằng mã mời, Task + Kanban kéo-thả, Import/Export Excel, Thống kê tiến độ, Chat realtime, Thông báo realtime, lọc/tìm kiếm task, cảnh báo mất cân bằng khối lượng, chuyển quyền trưởng nhóm, xóa thành viên, nhắc nhở deadline.
+- **Giảng viên & mời thành viên:** Dashboard `/supervisor`, mời + chờ đồng ý (cả Sinh viên lẫn Giảng viên), **nhận xét theo mốc** (v9), **bình luận trên task** (v9), nút quay lại đúng trang cho Giảng viên (v9), **Giảng viên vào được trang cá nhân `/profile` để đổi giao diện màu / mật khẩu / ảnh đại diện (v12, người dùng báo "đã ổn")**, nhãn (Tag).
+- **Task nâng cao:** Sửa/Xóa task (**người tạo VÀ Trưởng nhóm** đều sửa/xóa được mọi task — v11, đã test), Subtask, **số liệu Subtask thống nhất ở mọi nơi** (v8), **chế độ CHỈ XEM cho Giảng viên trong `TaskDetailModal` (v12: người dùng test đúng cả 4 bước, xem mục 8.28)**.
+- **Mốc & Kanban:** Mốc dạng cây, Kanban chia theo cây Mốc, phân quyền xem task (Trưởng nhóm / Thành viên).
+- **Nhóm & cá nhân:** xóa nhóm, trang cá nhân `/profile` (tên, avatar, mật khẩu), modal Thành viên nới rộng.
+- **Chat & file:** gửi ảnh/file trong Chat, badge tin chưa đọc, **sửa vỡ dấu tên file tiếng Việt** (Chat + đính kèm Task) (v8).
+- **Giao diện:** 4 theme (Sáng/Tối/Kem ấm/Xanh dịu), màu "Chưa làm" mới + theme hoá modal Thống kê (v8), modal tự cuộn khi dài.
+- **Import Excel:** cột mốc dạng "Mốc cha > Mốc con", cột "Thuộc công việc cha" (tạo Subtask), template có 2 dòng ví dụ.
+
+- **Đã test và xác nhận ĐÚNG ở v13 (7 mục tồn từ v12, người dùng trả lời "đều đúng" cho cả 7):**
+  1. Giao diện 4 theme (Sáng/Tối/Kem ấm/Xanh dịu) cho modal Thống kê, khung bình luận task (`comment.css`), khung nhận xét mốc (`milestone-comment.css`).
+  2. Nút "Xóa" công việc con: giữ NGUYÊN như bản v12 đang chạy (hiện cho mọi thành viên, Backend từ chối nếu không phải người tạo/Trưởng nhóm) — người dùng không yêu cầu đổi sang bản v11 (chỉ hiện cho người tạo/Trưởng nhóm).
+  3. Subtask còn đúng sau các lần dán đè: số liệu thống nhất giữa Kanban / Timeline / Thống kê, tick việc con cập nhật đúng.
+  4. Modal "Thành viên nhóm" với tài khoản Giảng viên (bản `MembersModal.jsx` v12 + `getGroupDetail` cho Giảng viên): mở được, không còn 403, ẩn đúng các nút/khung dành cho Trưởng nhóm.
+  5. Mục "Giảng viên hướng dẫn" trong modal Thành viên không bị trống → `supervisor.controller.js → getByGroup` hoạt động đúng với Giảng viên.
+  6. Lỗi 500 khi Giảng viên bấm "Đồng ý" lời mời: hết khi mời MỚI (nguyên nhân khả dĩ nhất: thông báo mời CŨ thiếu `referenceId`; chưa có bằng chứng trực tiếp).
+  7. Thông báo "bình luận mới" / "Giảng viên vừa nhận xét" hiển thị đúng ở 🔔 (vẫn dùng tạm `type = task_assigned`).
+
+**⚠ ĐÃ LÀM / ĐÃ SỬA NHƯNG CHƯA XÁC NHẬN:** *(v13: KHÔNG CÒN mục nào — cả 7 mục tồn từ v12 đã được người dùng test và xác nhận đúng, xem khối "Đã test và xác nhận ĐÚNG ở v13" ngay phía trên. Xác nhận được thu qua câu trả lời dạng lựa chọn "đều đúng"; nếu sau này gặp lỗi ở các chỗ đó thì ghi lại tại đây. Lưu ý: bản `TaskDetailModal.jsx` + `GroupDetail.jsx` đang chạy trên máy người dùng là bản của phiên v12, không phải bản phiên v11.)*
+
+**❌ CHƯA LÀM:**
+- *Nên làm:* (a) **Backend chặn ghi cho người KHÔNG phải thành viên nhóm** — hiện `updateTaskStatus`, `updateDescription`, `updateTaskTags` trong `task.service.js` chưa kiểm tra thành viên nên Giảng viên vẫn gọi được API (chế độ chỉ xem mới chỉ ẩn nút ở giao diện) (#14); (b) quét CSS còn màu cứng, nhiều khả năng ở `auth.css`, `notification.css` (#8); (c) kiểm thử toàn diện, tối ưu, deploy (#12); (d) viết báo cáo, làm slide thuyết trình (#13).
+- *Tùy chọn:* chú thích số "0/5" trên Kanban (#2); script sửa hàng loạt tên file cũ bị vỡ dấu trong DB (#3); type thông báo riêng cho bình luận/nhận xét (#7); sidebar điều hướng (#9); khu vực Admin (#10); theme hoá Login/Register (#11).
+
+*(Chi tiết từng mục xem bên dưới.)*
+
+### ✅ Đã hoàn thành (cả Backend + Frontend, đã test qua)
+
+**Nền tảng:** Auth (đăng ký có chọn vai trò Sinh viên/Giảng viên), Group (tạo/tham gia bằng mã mời), Task + Kanban kéo-thả, Import/Export Excel, Thống kê tiến độ (Pie Chart, đóng góp từng người), Chat realtime, Notification realtime (chuông + badge), Comment/File đính kèm/Lightbox xem ảnh/"Nội dung chi tiết" trên Task, lọc/tìm kiếm task, TaskCard (vạch trái theo độ ưu tiên, avatar, badge deadline), cảnh báo mất cân bằng khối lượng, chuyển quyền trưởng nhóm, xóa thành viên, nút "Nhắc nhở" deadline.
+
+**Vai trò Giảng viên & mời thành viên:**
+1. Đăng ký chọn vai trò; bảng `GroupSupervisor` riêng; **Dashboard riêng `/supervisor`** (`SupervisorDashboard.jsx`, `supervisorApi.js`) liệt kê nhóm đang phụ trách, bấm vào xem `GroupDetail` (Kanban + Timeline); `Login.jsx` tự chuyển Giảng viên sang `/supervisor`; trong `GroupDetail.jsx` biến `isMember = !!myMembership` để ẩn nút "Import Excel"/"+ Thêm công việc"/tab "Việc của tôi" khỏi Giảng viên.
+2. **Cơ chế "Mời + chờ đồng ý"** cho cả Sinh viên và Giảng viên: ô mời gộp chung 1 email trong `MembersModal`; người được mời thấy thông báo 🔔 có nút Đồng ý/Từ chối; người `PENDING` vẫn hiện trong danh sách kèm nhãn "Đang chờ".
+3. **Tag (nhãn phân loại):** ngân hàng nhãn riêng mỗi nhóm, component dùng chung `TagPicker.jsx`, badge nhãn trên `TaskCard`, sửa nhãn trong `TaskDetailModal`, Import Excel có cột "Nhãn".
+
+**Task nâng cao:**
+4. Sửa/Xóa task (`TaskDetailModal`: nút ✏️ Sửa mở form inline + 🗑️ Xóa có xác nhận). **(v11) Đã giải quyết hạn chế cũ:** nút hiện cho người tạo task HOẶC Trưởng nhóm (`task.createdBy === user.id || isLeader`, `isLeader` do `GroupDetail.jsx` truyền xuống) — xem mục "Chưa làm" #1.
+5. **Subtask** (`Task.parentTaskId`, chỉ 1 cấp, kế thừa `groupId`/`milestoneId`, tính vào % mốc (từ v8 còn tính vào % Kanban, Thống kê, cảnh báo khối lượng — xem mục 20 bên dưới); khối "☑️ Công việc con" trong `TaskDetailModal`, badge tiến độ trên TaskCard, không hiện thành card riêng trên Kanban).
+
+**Mốc & Kanban:**
+6. **Mốc dạng CÂY** (`parentId`): % đệ quy gộp mốc con; `TimelineView` dùng component đệ quy `MilestoneNode` thụt lề + nút "+ Mốc con"; **giờ liệt kê thêm tên từng task/subtask** trực tiếp trong mỗi mốc (chấm nhỏ báo xong/chưa xong).
+7. **Kanban chia theo cây Mốc (ĐÃ XÁC NHẬN: bản đang chạy là dạng CÂY, không phải gộp phẳng):** mỗi mốc — kể cả mốc con — là 1 board 3 cột RIÊNG (dùng `buildZoneTree` + `renderZoneNode` đệ quy trong `GroupDetail.jsx`, class `.kanban-zone-children` để thụt lề mốc con dưới mốc cha), mỗi board có `DndContext` riêng (`KanbanZone.jsx`) nên kéo-thả chỉ trong phạm vi board đó; % tính ngay ở Frontend; có thêm vùng "Không thuộc mốc nào".
+8. Phân quyền xem task: Leader thấy hết + dropdown lọc theo người phụ trách; Thành viên thường có 2 tab "Việc cả nhóm" (mặc định) / "Việc của tôi".
+
+**Quản lý nhóm & cá nhân:**
+9. **Xóa nhóm** (chỉ leader, gõ đúng tên nhóm để xác nhận, xóa cascade bằng `$transaction` + dọn file vật lý Attachment trên ổ đĩa; khối "⚠ Vùng nguy hiểm" cuối `MembersModal`; sau khi xóa → điều hướng `/home`).
+10. **Trang cá nhân `/profile`** (đổi tên, avatar upload → `uploads/avatars/` có dọn avatar cũ, đổi mật khẩu yêu cầu mật khẩu hiện tại, xem danh sách nhóm đang tham gia; route công khai `/users/:userId/avatar`).
+11. Modal "Thành viên nhóm" nới rộng (`className="modal-wide"`, 720px, dùng prop `className` mới thêm cho `Modal.jsx`).
+
+**Chat:**
+12. **Gửi ảnh/file trong Chat** (text qua Socket.io như cũ; file bắt buộc qua REST multipart → lưu `uploads/chat/` rồi Backend tự phát Socket.io để mọi người thấy realtime; ảnh hiện thumbnail trực tiếp, file khác hiện icon+tên+dung lượng bấm tải về; content và file có thể đi cùng 1 tin nhắn).
+13. **Badge tin nhắn chưa đọc** trên nút "💬 Trò chuyện" (đếm ở `GroupDetail.jsx`, không phụ thuộc ChatBox đóng/mở, dùng `useRef` cho `showChat` để tránh closure cũ trong listener Socket.io).
+
+**Giao diện:**
+14. **Đổi giao diện (Theme):** 4 theme (Sáng/Tối/Kem ấm/Xanh dịu) qua CSS Variables (`theme.css`, `ThemeContext.jsx`), lưu riêng từng trình duyệt bằng `localStorage` (KHÔNG đồng bộ giữa người dùng), chọn ở `/profile`. **Đã theme hoá và XÁC NHẬN ĐÚNG (v7):** `home.css`, `kanban.css`, `tag.css`, `members.css`, `chat.css`, `profile.css`, `timeline.css`, `theme.css`. **Thêm ở v8:** `stats.css` + `StatsModal.jsx` đã đổi sang `var(--color-*)` (người dùng CHƯA xác nhận đã xem thử cả 4 theme). **Thêm ở v9:** `comment.css` đã đổi toàn bộ mã màu cứng sang `var(--color-*, màu-cũ)` (ô nhập bình luận/nội dung có thêm `background`+`color` theo theme, nút `.btn-danger` dùng `color-mix`), đồng thời gộp bỏ phần nội dung từng bị lặp 2 lần trong file; `milestone-comment.css` dùng biến theme ngay từ đầu — người dùng CHƯA xác nhận riêng đã xem thử cả 4 theme cho 2 file này. **CHƯA theme hoá:** Login, Register (`auth.css` hoặc tương đương — chưa từng xem file). **(v13: người dùng đã xem thử cả 4 theme cho modal Thống kê, khung bình luận task và khung nhận xét mốc — đúng.)**
+15. `modal-box` giờ có `max-height: 85vh` + `.modal-body` tự cuộn — tránh modal dài (TaskDetailModal, MembersModal) tràn ra ngoài màn hình.
+
+**Import Excel:**
+16. Cột "Tên mốc" hỗ trợ `"Mốc cha > Mốc con"` — tự tạo/tái sử dụng đúng cấu trúc cây, khớp 100% với cách tạo Mốc bằng tay (không còn 2 logic tách biệt).
+17. Cột thứ 8 **"Thuộc công việc cha"** — gõ đúng tên 1 công việc (đã có sẵn hoặc tạo ngay ở dòng phía trên trong cùng file) sẽ biến dòng đó thành Subtask của công việc đó. Thứ tự 8 cột **đã xác nhận đúng**: Tên công việc, Mô tả, Email người phụ trách, Độ ưu tiên, Deadline, Tên mốc, Nhãn, Thuộc công việc cha.
+18. Template tải về (`generateTemplate`) có 2 dòng ví dụ mẫu sẵn (1 task cha + 1 subtask), header tự xuống dòng (`wrapText`) không tràn cột.
+
+**Giảng viên nhận xét theo mốc (làm ở v9, người dùng XÁC NHẬN test ổn):**
+19. **Nhận xét theo mốc** — thiết kế đã chốt với người dùng: chỉ **Giảng viên (ACCEPTED trong `GroupSupervisor`) và Trưởng nhóm** được viết; mọi người thuộc nhóm đều xem được; mỗi nhận xét hiện **nhãn vai trò** của người viết (Giảng viên / Trưởng nhóm / Thành viên); Giảng viên viết → 🔔 báo cả nhóm (trưởng nhóm viết thì KHÔNG báo); chỉ tác giả được xóa nhận xét của mình.
+   - Backend: `comment.repository.js` (`create` có `include author`; dùng `findByMilestone` có sẵn), `comment.service.js` (helper `getRoleInGroup`, `labelComments`, `getMilestoneComments` trả `{ comments, canWrite }`, `createMilestoneComment`), `comment.controller.js`, `comment.routes.js` (2 route mới), `group.repository.js` (thêm `findSupervisorship`, `getAcceptedSupervisors`), `milestone.repository.js` (`remove` dùng `$transaction` xóa comment của mốc rồi xóa mốc — tránh comment mồ côi).
+   - Frontend: `commentApi.js` (thêm `getByMilestone`, `createOnMilestone`), **`MilestoneComments.jsx` (mới)** — khung nhận xét dưới mỗi mốc, mặc định đóng và chỉ tải khi bấm "💬 Nhận xét (n)"; ô nhập chỉ hiện khi Backend trả `canWrite = true` (Frontend không cần tự biết vai trò); **Enter = gửi, Shift+Enter = xuống dòng, bỏ qua Enter khi đang gõ dở tiếng Việt (`isComposing`)**; gửi xong ô nhập tự tắt và hiện nút "✏️ Viết nhận xét" để mở lại, danh sách được tải lại từ Backend; **`milestone-comment.css` (mới)**; `TimelineView.jsx` thêm 1 dòng import + 1 dòng `<MilestoneComments milestoneId={node.id} />` dưới danh sách task của mỗi mốc.
+
+**Số liệu & lỗi tồn đọng (v8):**
+20. **Số liệu Subtask thống nhất — Cách 2 (đếm CẢ việc con ở mọi nơi), ĐÃ test đúng:** Timeline, % mỗi board Kanban (`KanbanZone.jsx` tự `flatMap` task cấp cao + `subtasks[]`), Thống kê (`task.service.js → getGroupStats`), danh sách mở rộng trong `StatsModal.jsx` (kèm nhãn "(việc con của ...)"), cảnh báo khối lượng (`group.service.js → getWorkloadWarnings`) đều đếm cả việc cha lẫn việc con; việc con tính theo `assignedTo` riêng của nó. **KHÔNG sửa** `taskRepository.findByGroup` (Import Excel cần nó chỉ trả task cấp cao để tra "công việc cha") và `milestoneRepository` (vốn đã gộp việc con). Người dùng nhận xét số kiểu "0/5" trên Kanban "hơi khó hiểu" (vì chỉ thấy thẻ việc cha) nhưng chấp nhận — xem "Chưa làm" #2.
+21. **Sửa lỗi vỡ dấu tên file tiếng Việt (Chat + đính kèm Task), ĐÃ test đúng:** hàm dùng chung `backend/src/utils/decodeFileName.js` (đọc lại byte latin1 → utf8; bỏ qua nếu chuỗi đã là Unicode đúng hoặc giải mã ra ký tự lỗi), gọi trong `message.service.js → sendFileMessage` và `attachment.service.js → uploadAttachment`. Chỉ áp dụng cho file upload SAU khi sửa; tên cũ đã lưu trong DB vẫn sai.
+22. **Màu & theme hoá modal Thống kê:** màu "Chưa làm" đổi `#E4E4E7` → `#94A3B8` (hằng `STATUS_COLORS` đầu `StatsModal.jsx` — sửa 1 chỗ là đổi cả biểu đồ, chú thích, thanh đóng góp, chấm trạng thái); Tooltip biểu đồ dùng biến theme (trước đây chữ lấy theo màu miếng nên không đọc được); viền miếng đang chọn đổi sang coral `#FC636B`; `stats.css` đổi toàn bộ mã màu sang `var(--color-*)`.
+
+**Làm thêm ở v9:**
+23. **Giảng viên bình luận trên TASK** (người dùng XÁC NHẬN test ổn): `comment.service.js` — `createTaskComment` và `getTaskComments(taskId, userId)` dùng `getRoleInGroup` nên Giảng viên (và thành viên/Trưởng nhóm) đều được viết/xem; người không thuộc nhóm → 403; `comment.controller.js → getTaskComments` truyền thêm `req.user.id`; thông báo cho người được giao task ghi rõ "Giảng viên ... vừa bình luận..." khi người viết là Giảng viên. `TaskDetailModal.jsx` (bản hoàn chỉnh đã gửi dán đè): thêm `ROLE_LABEL` + nhãn `comment-role comment-role-{authorRole}` cạnh tên người bình luận; đổi `Promise.all` → **`Promise.allSettled`** khi tải bình luận + file đính kèm (Giảng viên có thể không xem được file đính kèm nhưng vẫn phải xem được bình luận, không bị treo "Đang tải..."); `handleSend` có `catch` + `alert` báo lỗi.
+24. **Nút quay lại của Giảng viên** (người dùng XÁC NHẬN ổn): trang `/home` chỉ liệt kê nhóm mà mình là THÀNH VIÊN nên Giảng viên quay về đó thấy trống và tưởng nhóm "mất". `GroupDetail.jsx` thêm `backPath = user.role === 'GIANG_VIEN' ? '/supervisor' : '/home'` cho nút "← Quay lại"; `Home.jsx` nếu `user.role === 'GIANG_VIEN'` thì `<Navigate to="/supervisor" replace />` (đặt SAU mọi hook) và `useEffect` bỏ qua `loadGroups()`. (Phụ thuộc `user.role` có trong `AuthContext` — chưa xem file đó nhưng người dùng báo chạy ổn.)
+25. **Lỗi 500 khi Giảng viên bấm "Đồng ý" lời mời** (`Invalid prisma.groupSupervisor.update() ... where id`): đã đọc `supervisor.service.js`, `supervisor.repository.js`, `notification.service.js` — code truyền `referenceId` ĐÚNG ở cả 2 nhánh (mời mới, mời lại sau Từ chối) → nhiều khả năng do thông báo mời CŨ tạo từ trước thiếu `referenceId`. Cách xử lý đã hướng dẫn: Prisma Studio (`npx prisma studio`) xóa dòng `Notification` (`supervisor_invited`, `referenceId` trống) + dòng `GroupSupervisor` đang `PENDING`, rồi Trưởng nhóm mời lại. Người dùng KHÔNG nêu rõ cách đã xử lý → chưa xác nhận nguyên nhân gốc. **(v13: người dùng test mời Giảng viên mới rồi bấm Đồng ý — không còn lỗi 500.)**
+26. **403 khi Giảng viên mở "Thành viên nhóm"** (`GET /groups/:groupId/detail` dùng `findMembership` nên chặn Giảng viên, `MembersModal` dùng `Promise.all` nên cả modal hỏng): đã đề xuất sửa `getGroupDetail` (cho Giảng viên ACCEPTED xem, ẩn `inviteCode`) — **(v10) bản `group.service.js` người dùng gửi ở phiên v10 ĐÃ CÓ sẵn sửa này** (kèm cả phần đếm Subtask của v8) nên coi như đã dán; người dùng CHƯA test bằng tài khoản Giảng viên. Chưa xem `MembersModal.jsx`, `group.controller.js`, `group.routes.js`, nên chưa biết các API khác trong modal có còn chặn Giảng viên không. **(v13: người dùng test mở "Thành viên nhóm" bằng tài khoản Giảng viên — hết 403.)**
+27. **`MembersModal.jsx` cho Giảng viên** (làm ở v12, người dùng CHƯA xác nhận đã dán/test): đã đọc `MembersModal.jsx`, `group.controller.js`, `group.routes.js` → các nút mời bằng email, 👑 chuyển quyền, ✕ xóa thành viên, "Vùng nguy hiểm" (xóa nhóm) đã được ẩn sẵn bằng `isLeader` (Giảng viên không nằm trong danh sách thành viên nên `isLeader` luôn `false`) — KHÔNG cần ẩn thêm. Ở lớp route/controller chỉ `getGroupDetail` chặn Giảng viên (`getMembers`, `getWorkloadWarnings`, `getSupervisors` không chặn; riêng `supervisor.controller.js → getByGroup` chưa xem). Bản `MembersModal.jsx` hoàn chỉnh đã đưa: `loadData` đổi `Promise.all` → `Promise.allSettled` (hiện `loadError` nếu không tải được danh sách thành viên, luôn tắt "Đang tải..."), khung "Mã mời" chỉ hiện khi `group?.inviteCode`, "Vùng nguy hiểm" thêm điều kiện `isLeader && group`. **(v13: người dùng test đúng, kể cả mục "Giảng viên hướng dẫn" không trống.)**
+28. **Sửa/Xóa task cho Trưởng nhóm + Giảng viên chỉ xem task** (làm song song ở v11 và v12; người dùng XÁC NHẬN cả 4 bước test đúng với bản v12): `GroupDetail.jsx` truyền `isLeader` và `isMember` xuống `<TaskDetailModal>`; `TaskDetailModal.jsx` nhận 2 props (mặc định `isLeader = false`, `isMember = true`), `canManage = isLeader || user.id === task.createdBy` (khớp quy tắc Backend: Trưởng nhóm hoặc người tạo mới được Sửa/Xóa), `canEdit = isMember`. Khi `canEdit = false` (Giảng viên): ô "Nội dung chi tiết" chỉ đọc + ẩn "Lưu nội dung"; nhãn chỉ hiện dạng chữ + ẩn `TagPicker`/"Lưu nhãn"; khối "Công việc con" chỉ hiện khi task đã có việc con, không tick/xóa/thêm được; ẩn "+ Đính kèm file" (vẫn xem/tải file đã có); phần Bình luận giữ nguyên. Không sửa `task.service.js`. Lưu ý chênh lệch nút Xóa việc con giữa bản v11 và bản v12 (xem mục ⚠ ở đầu mục 8).
+29. **Giảng viên vào được trang cá nhân `/profile`** (làm ở v12, người dùng báo "đã ổn"): lỗi do `SupervisorDashboard.jsx` chỉ có avatar + tên dạng chữ thường (không có liên kết như `Home.jsx`), còn nút quay lại trong `ProfilePage.jsx` trỏ cứng `/home` mà `/home` tự chuyển Giảng viên sang `/supervisor`. `App.jsx` KHÔNG chặn route `/profile` theo vai trò nên không phải sửa. Đã sửa: `SupervisorDashboard.jsx` — avatar + tên thành `<Link to="/profile">`, hiện ảnh đại diện thật qua `userApi.getAvatarUrl` nếu `user.avatar` có; `ProfilePage.jsx` — `isSupervisor = user.role === 'GIANG_VIEN'`, nút quay lại `backPath` (`/supervisor` hoặc `/home`), khối danh sách nhóm của Giảng viên dùng `supervisorApi.getMyGroups()` (gộp về `{ id, name, role: 'supervisor' }`, tiêu đề "Nhóm đang hướng dẫn", nhãn "Giảng viên hướng dẫn"), Sinh viên giữ nguyên.
+
+### ⏳ Chưa làm / còn tồn đọng (theo thứ tự ưu tiên đề xuất)
+
+1. ✅ **(ĐÃ XONG ở v11, đã test)** Trưởng nhóm sửa/xóa được mọi task: `GroupDetail.jsx` truyền `isLeader` + `isMember` xuống `TaskDetailModal.jsx`; `canManage = người tạo || isLeader` (khớp `canModifyTask` ở Backend); nút Xóa việc con hiện cho người tạo việc con hoặc Trưởng nhóm.
+2. (Tùy chọn) Làm số "0/5" trên Kanban dễ hiểu hơn: trong `KanbanZone.jsx` thêm chữ "việc" và tooltip kiểu "Gồm 1 việc chính + 4 việc con". Người dùng chưa chọn làm.
+3. (Tùy chọn) Đoạn lệnh/script sửa HÀNG LOẠT tên file cũ bị vỡ dấu đã lưu trong DB (`Message.fileName`, `Attachment.fileName`). Người dùng chưa yêu cầu.
+4. ✅ **(ĐÃ XONG ở v13, người dùng test đúng)** Xem thử 4 theme cho modal Thống kê, khung bình luận task (`comment.css`), khung nhận xét mốc (`milestone-comment.css`). Khung modal (`home.css`: `.modal-box`, `.modal-overlay`...) đã xác minh dùng biến theme đúng từ v8.
+5. ✅ **(ĐÃ XONG, người dùng test đúng ở v12 — xem mục 8.28)** Ẩn nút dành cho thành viên khỏi Giảng viên trong `TaskDetailModal.jsx` bằng prop `isMember`.
+6. ✅ **(ĐÃ XONG ở v13, người dùng test đúng)** `MembersModal` cho Giảng viên: các nút mời / chuyển quyền / xóa thành viên / "Vùng nguy hiểm" đã ẩn bằng `isLeader`; bản sửa `MembersModal.jsx` mở được bằng tài khoản Giảng viên; mục "Giảng viên hướng dẫn" không trống (`supervisor.controller.js → getByGroup` ổn).
+6b. ✅ **(ĐÃ XONG ở v12 — xem mục 8.29)** Giảng viên không có đường vào trang cá nhân `/profile`.
+7. **(MỚI v9, tùy chọn)** Thêm `type` thông báo riêng (VD `milestone_comment`) thay vì dùng tạm `task_assigned`. (v13: `NotificationBell.jsx` hiển thị thông báo bình luận/nhận xét ĐÚNG, người dùng đã test — nên đây chỉ là việc dọn dẹp, không bắt buộc.)
+8. **(MỚI v9)** Quét CSS còn màu cứng: VS Code `Ctrl+Shift+F`, bật regex, tìm `#[0-9A-Fa-f]{6}` trong `frontend/src/styles` (bỏ qua `theme.css`); nhiều khả năng còn ở `auth.css` và `notification.css`. Chuyển từng file sang `var(--color-*, màu-cũ)` theo cách đã làm với `comment.css`.
+9. Sidebar điều hướng cố định (đổi nhóm nhanh không cần về Home).
+10. Khu vực Admin (không bắt buộc).
+11. Theme hoá nốt Login/Register.
+12. Kiểm thử toàn diện, tối ưu, deploy.
+13. Viết báo cáo, làm slide thuyết trình.
+14. **(MỚI v11)** Chặn ghi ở Backend cho người không phải thành viên nhóm: thêm kiểm tra `groupRepository.findMembership` vào `updateTaskStatus`, `updateDescription`, `updateTaskTags` (hiện chỉ `createTask`, `createSubtask`, `uploadAttachment` mới kiểm tra). Việc này CẢI THIỆN bảo mật, không ảnh hưởng người dùng bình thường; cần xin `task.controller.js`/`task.routes.js` nếu muốn kiểm tra thêm ở tầng route.
+
+## 9. Điểm cần XÁC MINH còn lại
+
+Các mục sau **đã xác nhận xong ở v7**, không cần kiểm tra lại: Kanban dạng cây (mục 8.7), thứ tự 8 cột Import (mục 8.17), tên thư mục `sockets/`, `routes/index.js` đủ `/supervisors` + `/users`, `App.jsx` đủ mọi route, `home.css` đã theme hoá lại đúng, `Modal.jsx`/`MembersModal.jsx`/`Home.jsx`/`AuthContext.jsx` đều ở bản mới nhất có đủ tính năng 2 nhánh.
+
+**Đã xem code thật ở v8:** `task.service.js`, `task.repository.js`, `milestone.repository.js`, `group.service.js`, `group.repository.js`, `GroupDetail.jsx`, `KanbanZone.jsx`, `StatsModal.jsx`, `stats.css`, `theme.css`, `home.css`, `message.service.js`, `message.controller.js`, `message.routes.js`, `attachment.service.js`, `attachment.controller.js`, `utils/decodeFileName.js`.
+
+**Đã xem code thật ở v9 (bản người dùng gửi trong phiên v9):** `comment.repository.js`, `comment.service.js`, `comment.controller.js`, `comment.routes.js`, `commentApi.js`, `group.repository.js`, `milestone.repository.js`, `notification.service.js`, `group.service.js`, `supervisor.service.js`, `supervisor.repository.js`, `TimelineView.jsx`, `timeline.css`, `TaskDetailModal.jsx`, `comment.css`, `GroupDetail.jsx`, `Home.jsx`.
+
+**Đã xem code thật ở v11 (bản người dùng gửi trong phiên v11, đã sửa):** `TaskDetailModal.jsx`, `GroupDetail.jsx`.
+
+**Đã xem code thật ở v12 (bản người dùng gửi trong phiên v12):** `MembersModal.jsx`, `group.controller.js`, `group.routes.js`, `SupervisorDashboard.jsx`, `ProfilePage.jsx`, `App.jsx` (route `/profile` KHÔNG chặn theo vai trò). Phiên v12 cũng đã đưa bản hoàn chỉnh để dán đè cho `MembersModal.jsx`, `SupervisorDashboard.jsx`, `ProfilePage.jsx`, `GroupDetail.jsx`, `TaskDetailModal.jsx` dựa trên bản người dùng gửi lúc đó — nếu phiên khác sửa các file này sau thời điểm đó thì có thể đã bị ghi đè.
+
+**⚠ Rủi ro ghi đè do làm song song (đọc kỹ):**
+- **(v10 ĐÃ XÁC MINH, hết rủi ro với file này)** `group.service.js` người dùng gửi ở phiên v10 có ĐỦ cả đếm Subtask (`getWorkloadWarnings`) lẫn `getGroupDetail` cho Giảng viên. Ghi chú cũ của v9: bản `group.service.js` mà phiên v9 nhìn thấy **KHÔNG có** phần đếm Subtask của v8 (`getWorkloadWarnings` chỉ đếm task cấp cao). Có thể đó là bản cũ hơn v8, hoặc phần v8 chưa được dán. Phiên v9 KHÔNG ghi đè file này (chỉ đề xuất sửa riêng hàm `getGroupDetail`), nhưng khi đụng tới PHẢI xin bản mới nhất.
+- Phiên v9 đã đưa file HOÀN CHỈNH để dán đè cho: `group.repository.js`, `milestone.repository.js`, `comment.repository.js`, `comment.service.js`, `comment.controller.js`, `comment.routes.js`, `commentApi.js`, `TimelineView.jsx`, `TaskDetailModal.jsx`, `comment.css`, `GroupDetail.jsx`, `Home.jsx` — dựa trên bản người dùng gửi lúc đó. Nếu phiên v8 (làm song song) đã sửa các file này SAU thời điểm đó (đặc biệt phần Subtask trong `GroupDetail.jsx`/`TaskDetailModal.jsx`) thì có thể đã bị mất. Nên nhờ người dùng kiểm tra nhanh Subtask còn hoạt động và số liệu còn đúng (Kanban/Timeline/Thống kê).
+- **(v11 ĐÃ XÁC MINH)** `GroupDetail.jsx` người dùng gửi ở v11 ĐÃ có `backPath` của v9 → bản v9 đã được dán; `TaskDetailModal.jsx` cũng đã có `Promise.allSettled`, nhãn vai trò bình luận và giao diện Subtask của v9. Riêng `group.repository.js` và `milestone.repository.js` phiên v10 từng thấy là bản trước v9 (`milestone.repository.js → remove` chưa dùng `$transaction`) — ĐỪNG dùng làm cơ sở để sửa, hãy xin bản mới nhất. `task.service.js`, `group.service.js`, `KanbanZone.jsx`, `StatsModal.jsx` người dùng gửi lại ở v10 đã được kiểm tra nội dung và chứa đủ phần v8.
+
+**Còn lại, CHƯA xác minh trực tiếp:**
+- `attachmentApi.js`, `attachment.routes.js` (người dùng từng gửi nhầm `auth.routes.js` thay cho file này).
+- `ImportTaskModal.jsx`, `CreateTaskModal.jsx`, `AddMilestoneModal.jsx`, `TagPicker.jsx`, `NotificationBell.jsx`, `KanbanColumn.jsx`.
+- `supervisor.controller.js` (chưa xem code, nhưng v13: người dùng test mục "Giảng viên hướng dẫn" trong modal Thành viên không trống → `getByGroup` hoạt động đúng với Giảng viên).
+- `ChatBox.jsx`, `ThemeContext.jsx`, `AuthContext.jsx` (chưa xác nhận lại là bản cuối cùng; riêng `AuthContext` cần có trường `role` trong `user` vì `GroupDetail`/`Home` bản v9 dựa vào `user.role`).
+- `Login.jsx`, `Register.jsx` và CSS tương ứng — biết là tồn tại nhưng chưa từng xem nội dung.
+- Test data: tài khoản Giảng viên test `giangvien@gmail.com` từng vừa là `GroupMember` vừa là `GroupSupervisor` ở "nhóm 1" (do từng vào bằng mã mời) → hệ thống coi họ là Giảng viên (kiểm tra Giảng viên trước), nhưng `isMember = true` nên vẫn thấy nút Import/Thêm việc. Muốn test đúng vai Giảng viên thuần: xóa họ khỏi danh sách thành viên (Trưởng nhóm bấm ✕). Để test đủ nhận xét/bình luận cần 3 tài khoản trong cùng nhóm: Trưởng nhóm, Thành viên thường, Giảng viên đã Đồng ý.
+
+## 10. Bài học kỹ thuật đã rút ra (tránh lặp lại)
+
+- Prisma 7: quên `npx prisma generate` sau `migrate dev` → lỗi `Cannot read properties of undefined`.
+- Lỗi `EADDRINUSE :::5000`: còn phiên `npm run dev` cũ → `taskkill /F /IM node.exe` rồi chạy lại.
+- `.env` từng bị dán đè mất `DATABASE_URL`/`JWT_SECRET`.
+- `@dnd-kit` + `onClick` cùng 1 phần tử: bắt buộc `PointerSensor` với `distance: 8`.
+- Route ảnh/file dùng `<img src>` hoặc tải trực tiếp không được gắn `authMiddleware`.
+- Ngày dạng `"2026-09-25"` phải `new Date(...)` trước khi lưu Prisma.
+- Hàm Repository có 2 tham số cùng kiểu (`findMembership(userId, groupId)`) rất dễ đảo thứ tự khi copy → đã từng gây 403 sai; luôn kiểm tra thứ tự.
+- `{/* comment */}` đặt **ngay sau `return (` và trước thẻ JSX gốc** bị hiểu như JS thường, gây hàng loạt lỗi cú pháp; comment JSX chỉ hợp lệ khi nằm BÊN TRONG một thẻ.
+- Trong `taskApi.js`, từng có hàm bị đặt lạc ra ngoài object → lỗi cú pháp.
+- Khi người dùng báo "trắng màn": mở F12 → Console lấy lỗi cụ thể (thường là thiếu `export`, sai đường dẫn import, hoặc file tạo nhầm thư mục).
+- `members.css` (và `comment.css`) từng bị lặp nội dung do dán đè nối thêm thay vì thay thế → khi nhận file CSS, kiểm tra trùng lặp trước khi sửa tiếp.
+- Lỗi 404 ở route mới thường do chưa restart hẳn backend hoặc chưa nối vào `routes/index.js`.
+- **Copy/dán tay dễ dính ký tự thừa cuối file** (từng gặp `};s` gây `ReferenceError`, khiến Backend crash im lặng — mọi tính năng bị tưởng nhầm là "chưa code" trong khi thực ra server không chạy). Khi người dùng báo "code không hoạt động" dù đã dán đúng, luôn hỏi xin log terminal Backend trước.
+- Khi 2 nhánh làm việc cùng sửa 1 file dùng chung (`home.css`, `App.jsx`, `Modal.jsx`, `MembersModal.jsx`...), rất dễ bị nhánh sau ghi đè mất tính năng của nhánh trước nếu không xin file gốc mới nhất — đã xảy ra thật với `home.css` (mất toàn bộ biến theme), phát hiện và sửa lại ở v7.
+- CSS Variables (theme) và các modal/style viết SAU thời điểm làm Theme cần chủ động dùng `var(--color-*)` ngay từ đầu, tránh phải quét lại toàn bộ codebase sau này.
+- **(v8)** `multer` đọc `originalname` theo `latin1` nên tên file tiếng Việt vỡ dấu → giải mã lại bằng `Buffer.from(name, 'latin1').toString('utf8')`; nên đặt trong 1 hàm dùng chung (`utils/decodeFileName.js`) và nhớ gọi ở MỌI nơi lưu tên file upload (Chat, Đính kèm Task...).
+- **(v8)** Hàm dùng chung trong `utils/` phải được tạo trước khi dán các file `require` nó, nếu không backend crash ngay khi khởi động.
+- **(v8)** `recharts` `<Tooltip>` mặc định lấy màu chữ theo màu miếng biểu đồ → miếng màu nhạt thì chữ không đọc được; ép `itemStyle`/`contentStyle` dùng `var(--color-*)`. Thuộc tính SVG như `stroke` của `<Cell>` không chắc nhận `var(--...)` → dùng mã màu cố định (màu nhấn coral giống nhau ở mọi theme).
+- **(v8)** `taskRepository.findByGroup` CHỈ trả task cấp cao (kèm `subtasks[]` lồng bên trong) và Import Excel phụ thuộc vào đó → khi cần đếm cả Subtask thì "dàn phẳng" bằng `flatMap` ở Service/Component, KHÔNG đổi Repository.
+- **(v8)** Người dùng làm việc ở nhiều phiên song song: hễ họ nói "phần đó phiên khác đã làm rồi" thì ghi nhận nhưng vẫn xin file gốc mới nhất trước khi đụng tới phần đó.
+- **(v9)** **Giảng viên không nằm trong `GroupMember`** → mọi hàm kiểm tra quyền dùng `findMembership` (hoặc API chỉ liệt kê thành viên) đều chặn Giảng viên bằng 403: đã gặp ở comment Task, `getGroupDetail`, và trang `/home`. Khi làm tính năng mới Giảng viên cũng cần dùng, kiểm tra thêm `groupRepository.findSupervisorship(userId, groupId)`; dùng `getRoleInGroup` trong `comment.service.js` làm mẫu (kiểm tra Giảng viên TRƯỚC, vì tài khoản test có thể vừa là thành viên vừa là Giảng viên).
+- **(v9)** Màu viết cứng trong CSS khiến chữ "chìm" khi đổi theme tối (đã gặp ở `comment.css`: `#151B26`, `#3B3F45`, đường kẻ `#F1F1F3` trắng chói). Dùng `var(--color-*, màu-dự-phòng)`; muốn nền nhạt của nút nguy hiểm thích ứng theme thì dùng `color-mix(in srgb, var(--color-danger) 12%, transparent)`.
+- **(v9)** Khi 1 modal tải nhiều API độc lập (bình luận + file đính kèm) thì dùng `Promise.allSettled`, không dùng `Promise.all`: một API bị 403 (VD Giảng viên không xem được file) sẽ làm modal treo "Đang tải..." mãi.
+- **(v9)** Lỗi 500 `Invalid prisma.groupSupervisor.update() ... where id: String` khi bấm Đồng ý nghĩa là `referenceId` của thông báo bị rỗng (thường do thông báo mời cũ tạo trước khi có `referenceId`) — xem mục 8.25 cách xử lý bằng Prisma Studio.
+- **(v9)** Ô nhập "Enter để gửi" phải kiểm tra `e.nativeEvent.isComposing`, nếu không gõ tiếng Việt (Telex/VNI) bấm Enter để chốt chữ sẽ gửi nhầm câu đang gõ dở.
+- **(v9)** Xóa 1 bản ghi cha có comment con tùy chọn (`Comment.milestoneId?`) mà không xóa comment sẽ để lại comment mồ côi → dùng `$transaction` xóa cả hai (đã áp dụng trong `milestone.repository.js → remove`).
+- **(v9)** Người dùng muốn nhận FILE HOÀN CHỈNH để dán đè và code hiển thị trực tiếp trong chat; mỗi lần gửi file dài vẫn phải đủ nhãn `[DÁN ĐÈ FILE CŨ]` + đường dẫn + comment (xem mục 2.2, 2.11).
+- **(v10)** Khi người dùng gửi lại 1 bản bàn giao cũ hơn bản đã có (VD gửi v8 trong khi đã có v9): so sánh bằng diff theo dòng rồi chọn bản MỚI NHẤT làm gốc (v9 là tập con-chứa của v8), không trộn lại từng dòng cũ.
+- **(v11)** `TaskDetailModal` nhận 2 prop phân quyền `isLeader` (mặc định `false`) và `isMember` (mặc định `true`) từ `GroupDetail` — mặc định như vậy để nơi khác gọi modal này không đổi hành vi. Quyền THẬT luôn do Backend quyết định (`canModifyTask`); Frontend chỉ ẩn/hiện nút nên điều kiện hiện nút phải khớp với điều kiện Backend, và chế độ chỉ xem hiện KHÔNG thay thế việc chặn ở Backend (xem "chưa làm" #14).
+- **(v12)** Mọi liên kết/điều hướng dùng chung cho cả 2 vai trò phải rẽ theo `user.role`: nút "Quay lại" trỏ cứng `/home` làm Giảng viên bị `Home.jsx` đẩy sang `/supervisor`; trang chủ riêng của Giảng viên (`SupervisorDashboard`) phải có đường vào `/profile`. Trang `ProfilePage` phải dùng `supervisorApi.getMyGroups()` (bản ghi `GroupSupervisor`, thông tin nhóm nằm trong `s.group`) cho Giảng viên, vì `groupApi.getMyGroups()` chỉ liệt kê nhóm của thành viên.
+- **(v12)** Khi 2 phiên cùng làm 1 tính năng song song (VD "Trưởng nhóm sửa/xóa + chế độ chỉ xem"), file người dùng dán SAU CÙNG sẽ thắng và các chi tiết nhỏ có thể lệch (VD điều kiện nút Xóa việc con). Trước khi nối tiếp, xin file hiện tại để đối chiếu thay vì giả định bản nào đang chạy.
+
+## 11. Cách tiếp tục
+
+1. Đọc mục 2 và mục 9 trước tiên (chú ý khối "Rủi ro ghi đè do làm song song").
+2. Hỏi người dùng muốn làm mục nào ở "Chưa làm" (mục 8). Vai trò Giảng viên đã khá đủ: nhận xét theo mốc, bình luận task, chỉ xem task, vào được trang cá nhân, quay lại `/supervisor`. Mục 1, 4, 5, 6, 6b đã xong (v13: không còn mục nào chờ test). Gợi ý tiếp theo: mục 14 (chặn ghi ở Backend cho người ngoài nhóm — quan trọng vì chế độ chỉ xem mới chỉ ẩn nút ở giao diện), mục 8 (quét màu cứng còn lại) kèm mục 11 (theme hoá Login/Register), hoặc chuyển sang kiểm thử/deploy/báo cáo; người dùng có thể tự chọn khác.
+3. Xin đúng file gốc cần sửa (ưu tiên các file ở mục 9 "chưa xác minh" và `group.service.js` nếu đụng tới), hỏi 1–2 câu thiết kế nếu là tính năng lớn.
+4. Trả code đầy đủ theo khuôn Model → Repository → Service → Validator → Controller → Route (Backend), kèm `[FILE MỚI]/[DÁN ĐÈ FILE CŨ]`, comment tiếng Việt rõ ràng, file HOÀN CHỈNH để dán đè, và cuối cùng luôn kèm các bước test cụ thể.
+5. Sau khi hoàn thành 1 tính năng lớn, nhắc người dùng cân nhắc xuất bản `v14` cập nhật file này nếu định chuyển sang phiên làm việc khác.

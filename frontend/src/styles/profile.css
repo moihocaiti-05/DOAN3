@@ -1,0 +1,145 @@
+.profile-page {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 32px 20px 60px;
+  background: var(--color-bg);
+  min-height: 100vh;
+}
+
+.profile-title {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--color-text);
+  margin: 16px 0 28px;
+}
+
+.profile-section {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-light);
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 20px;
+}
+
+.profile-avatar-row {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.profile-avatar-img {
+  width: 84px;
+  height: 84px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.profile-avatar-fallback {
+  width: 84px;
+  height: 84px;
+  border-radius: 50%;
+  background: var(--color-accent);
+  color: #FFFFFF;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 26px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.profile-avatar-upload-btn {
+  display: inline-block;
+  cursor: pointer;
+}
+
+.profile-inline-form {
+  display: flex;
+  gap: 8px;
+}
+
+.profile-inline-form input {
+  flex: 1;
+}
+
+.profile-email {
+  font-size: 12px;
+  color: var(--color-text-muted);
+  margin-top: 10px;
+}
+
+.profile-password-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-width: 320px;
+}
+
+.profile-group-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.profile-group-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  border: 1px solid var(--color-border-light);
+  border-radius: 8px;
+  text-decoration: none;
+  transition: border-color 0.15s ease;
+}
+
+.profile-group-item:hover {
+  border-color: var(--color-accent);
+}
+
+.profile-group-name {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+/* ===== MỚI THÊM: Bộ chọn Theme (giao diện) ===== */
+.theme-picker-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+}
+
+.theme-picker-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 14px 8px;
+  border: 1.5px solid var(--color-border);
+  border-radius: 10px;
+  background: var(--color-surface);
+  cursor: pointer;
+  font-family: 'Inter', sans-serif;
+  transition: border-color 0.15s ease;
+}
+
+.theme-picker-btn:hover {
+  border-color: var(--color-accent);
+}
+
+.theme-picker-btn.theme-picker-active {
+  border-color: var(--color-accent);
+  border-width: 2px;
+  background: var(--color-accent-soft-bg);
+}
+
+.theme-picker-emoji {
+  font-size: 22px;
+}
+
+.theme-picker-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-text);
+}

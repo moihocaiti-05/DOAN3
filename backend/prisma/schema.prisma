@@ -1,0 +1,361 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// MỚI THÊM: phân biệt Sinh viên và Giảng viên hướng dẫn ngay từ lúc Đăng ký
+enum Role {
+  SINH_VIEN
+  GIANG_VIEN
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String
+  fullName  String
+  avatar    String?
+  role      Role     @default(SINH_VIEN)   // MỚI THÊM: loại tài khoản, chọn lúc đăng ký
+  emailVerified Boolean @default(false)   // MỚI THÊM: email đã được xác nhận bằng mã gửi qua mail chưa (false = chưa được đăng nhập)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  memberships   GroupMember[]
+  createdTasks  Task[] @relation("TaskCreator")   // các task mà user này đã TẠO
+  assignedTasks Task[] @relation("TaskAssignee")  // các task mà user này ĐƯỢC GIAO
+  messages      Message[]   // MỚI THÊM: 1 user có thể gửi nhiều tin nhắn
+  otifications Notification[]   // MỚI THÊM: 1 user có nhiều thông báo
+  comments      Comment[]
+  attachments Attachment[]
+  supervising   GroupSupervisor[]   // MỚI THÊM: nếu user này là Giảng viên, đây là danh sách các nhóm mà họ đang phụ trách
+  activities    ActivityLog[]   // MỚI THÊM: các hoạt động mà user này đã thực hiện trong các nhóm
+
+  // MỚI THÊM: các phòng chat (nhóm chat con / chat riêng) mà user này tham gia và các phòng do user này tạo
+  conversationMemberships ConversationMember[]
+  createdConversations    Conversation[] @relation("ConversationCreator")
+
+  // MỚI THÊM: các lời mời kết bạn mà user này đã gửi đi / đã nhận được (kèm cả các cặp đã là bạn bè)
+  sentFriendRequests     Friendship[] @relation("FriendshipRequester")
+  receivedFriendRequests Friendship[] @relation("FriendshipAddressee")
+
+  // MỚI THÊM: mã xác nhận email đang chờ nhập của user này (tối đa 1 bản ghi, xác nhận xong thì bị xóa)
+  emailVerification EmailVerification?
+
+  @@map("users")
+}
+
+// MỚI THÊM: lưu MÃ XÁC NHẬN EMAIL (6 số) đã gửi cho 1 user - mỗi user chỉ có tối đa 1 bản ghi
+// Chỉ lưu bản BĂM (codeHash) của mã, không lưu mã gốc, nên người xem database cũng không đọc được mã
+model EmailVerification {
+  id         String   @id @default(uuid())
+  userId     String   @unique                 // unique -> mỗi user chỉ có 1 mã đang chờ; gửi lại mã thì ghi đè bản ghi cũ
+  codeHash   String                           // bản băm (bcrypt) của mã 6 số
+  expiresAt  DateTime                         // hết hạn lúc nào (10 phút sau khi gửi)
+  attempts   Int      @default(0)             // số lần đã nhập sai, quá giới hạn thì phải gửi lại mã mới
+  lastSentAt DateTime @default(now())         // lần gửi mail gần nhất, dùng để chặn bấm "Gửi lại mã" liên tục
+  createdAt  DateTime @default(now())
+
+  // onDelete: Cascade -> xóa user thì mã xác nhận của user đó cũng bị xóa theo
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("email_verifications")
+}
+
+model Group {
+  id          String        @id @default(uuid())
+  name        String
+  description String?
+  inviteCode  String        @unique @default(uuid())
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  members     GroupMember[]
+  tasks       Task[]        // 1 nhóm có nhiều task
+  messages Message[]   //  1 nhóm có nhiều tin nhắn chat
+  milestones Milestone[]   //  1 nhóm có nhiều mốc
+  supervisors GroupSupervisor[]   // MỚI THÊM: 1 nhóm có thể có 1 hoặc nhiều Giảng viên phụ trách
+  tags        Tag[]         // MỚI THÊM: "ngân hàng nhãn" riêng của nhóm này (VD Frontend, Backend...)
+  activities  ActivityLog[]   // MỚI THÊM: lịch sử hoạt động của nhóm này
+  conversations Conversation[]   // MỚI THÊM: các nhóm chat con thuộc nhóm đồ án này
+
+  @@map("groups")
+}
+
+// MỚI THÊM: nhãn phân loại task theo mảng công việc (VD Frontend, Backend, Chương 1...)
+// Khác với Milestone (mốc theo THỜI GIAN), Tag là phân loại theo MẢNG công việc, 1 task có thể có cả 2
+// Mỗi nhóm có "ngân hàng nhãn" riêng - khi tạo task có thể chọn nhãn có sẵn hoặc gõ tên mới (tự thêm vào ngân hàng)
+model Tag {
+  id        String   @id @default(uuid())
+  name      String                          // tên nhãn, VD "Frontend", "Backend"
+  groupId   String                          // nhãn này thuộc về nhóm nào
+  createdAt DateTime @default(now())
+
+  group Group  @relation(fields: [groupId], references: [id])
+  tasks Task[]                              // quan hệ nhiều-nhiều: Prisma tự tạo bảng trung gian, không cần khai báo tay
+
+  @@unique([groupId, name])                 // trong 1 nhóm không được có 2 nhãn trùng tên
+  @@map("tags")
+}
+
+// MỚI THÊM: trạng thái của 1 lời mời (tham gia nhóm hoặc phụ trách nhóm)
+enum InviteStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
+}
+
+model GroupMember {
+  id       String   @id @default(uuid())
+  userId   String
+  groupId  String
+  role     String   @default("member")
+  status   InviteStatus @default(ACCEPTED)   // MỚI THÊM: ACCEPTED cho tham gia bằng mã mời (giữ hành vi cũ), PENDING khi được mời bằng email chờ đồng ý
+  joinedAt DateTime @default(now())
+
+  user  User  @relation(fields: [userId], references: [id])
+  group Group @relation(fields: [groupId], references: [id])
+
+  @@unique([userId, groupId])
+  @@map("group_members")
+}
+
+// MỚI THÊM: bảng trung gian riêng cho Giảng viên, KHÔNG dùng chung GroupMember
+// Lý do: Giảng viên không thao tác Task/Kanban như thành viên, chỉ xem tổng quan + nhận xét theo mốc.
+// Tách bảng riêng còn cho phép 1 Giảng viên phụ trách nhiều nhóm cùng lúc, dễ truy vấn "các nhóm tôi phụ trách".
+model GroupSupervisor {
+  id         String   @id @default(uuid())
+  groupId    String                          // nhóm được phụ trách
+  userId     String                          // tài khoản Giảng viên (phải có role = GIANG_VIEN)
+  status     InviteStatus @default(ACCEPTED)  // MỚI THÊM: ACCEPTED cho dữ liệu cũ (mời tự động trước đây), PENDING cho lời mời mới cần Giảng viên đồng ý
+  invitedAt  DateTime @default(now())        // thời điểm Trưởng nhóm gửi lời mời
+
+  group Group @relation(fields: [groupId], references: [id])
+  user  User  @relation(fields: [userId], references: [id])
+
+  @@unique([userId, groupId])                // 1 giảng viên không bị gắn trùng vào cùng 1 nhóm
+  @@map("group_supervisors")
+}
+
+model Task {
+  id          String    @id @default(uuid())
+  title       String
+  description String?
+  status      String    @default("todo")
+  priority    String    @default("medium")
+  deadline    DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  completedAt DateTime?       // thời điểm task chuyển sang "done" GẦN NHẤT; KHÔNG bị xóa khi kéo về trạng thái khác
+  firstCompletedAt DateTime?  //  thời điểm task hoàn thành LẦN ĐẦU TIÊN (không đổi về sau)
+  reopenCount Int @default(0) //  số lần task bị kéo ra khỏi "done" để làm lại
+    reviewNote String?          //  (Phiên 12): ghi chú khi Kiểm định TỪ CHỐI (lý do phải làm lại); bị xóa khi nộp kiểm định lại hoặc khi được duyệt
+  reviewedAt DateTime?        //  (Phiên 12): lúc bị từ chối gần nhất
+  reviewedByName String?      //  (Phiên 12): tên người từ chối (lưu sẵn chữ, không cần quan hệ)
+
+  groupId     String
+  group       Group     @relation(fields: [groupId], references: [id])
+
+  assignedTo  String?
+  assignee    User?     @relation("TaskAssignee", fields: [assignedTo], references: [id])
+
+  createdBy   String?
+  creator     User?     @relation("TaskCreator", fields: [createdBy], references: [id])
+
+  milestoneId String?                                          // task có thể thuộc 1 mốc (không bắt buộc)
+  milestone   Milestone? @relation(fields: [milestoneId], references: [id])
+  comments      Comment[]
+  attachments Attachment[]
+  tags          Tag[]                                          // 1 task có thể gắn nhiều nhãn (Frontend, Backend...)
+
+  // MỚI THÊM: quan hệ tự tham chiếu (self-relation) để làm Subtask - 1 task có 1 task cha (parentTask) và nhiều task con (subtasks)
+  // CHỈ SÂU 1 CẤP: việc chặn "subtask của subtask" được kiểm tra ở Service (task.service.js), Database không tự chặn được điều này
+  // onDelete: Cascade -> xóa task cha thì Database tự động xóa luôn toàn bộ subtask bên trong, tránh subtask "mồ côi"
+  parentTaskId String?
+  parentTask   Task?     @relation("SubtaskTree", fields: [parentTaskId], references: [id], onDelete: Cascade)
+  subtasks     Task[]    @relation("SubtaskTree")
+
+  @@map("tasks")
+}
+
+// Model lưu 1 tin nhắn chat - có thể thuộc "chat cả nhóm" (groupId) HOẶC 1 phòng chat riêng/nhóm chat con (conversationId)
+model Message {
+  id        String   @id @default(uuid())
+  content   String?                         // MỚI SỬA: cho phép null - tin nhắn có thể CHỈ có file, không kèm chữ
+  groupId   String?                         // MỚI SỬA: cho phép null - tin nhắn trong phòng chat riêng/nhóm chat con KHÔNG thuộc "chat cả nhóm", chỉ gắn conversationId
+  conversationId String?                    // MỚI THÊM: tin nhắn này thuộc phòng chat nào (null nếu là tin của "chat cả nhóm")
+  senderId  String                          // ai gửi tin nhắn này
+  createdAt DateTime @default(now())        // thời điểm gửi, dùng để sắp xếp tin nhắn theo thứ tự
+
+  // MỚI THÊM: thông tin file đính kèm (nếu có) - đều để null nếu tin nhắn thuần chữ, giống cơ chế Attachment của Task
+  fileName  String?
+  filePath  String?
+  fileSize  Int?
+
+  group  Group? @relation(fields: [groupId], references: [id])   // MỚI SỬA: thêm dấu ? vì groupId giờ có thể null
+  // MỚI THÊM: onDelete: Cascade -> xóa phòng chat thì Database tự xóa luôn toàn bộ tin nhắn trong phòng đó
+  conversation Conversation? @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  sender User  @relation(fields: [senderId], references: [id])
+
+  @@map("messages")
+}
+
+// MỚI THÊM: loại phòng chat
+enum ConversationType {
+  GROUP_CHAT   // nhóm chat con (VD "Làm Backend") - thuộc 1 nhóm đồ án, nhiều người
+  PRIVATE      // chat riêng 1-1 giữa 2 người
+}
+
+// MỚI THÊM: 1 phòng chat (nhóm chat con hoặc chat riêng) - KHÁC với "chat cả nhóm" có sẵn (chat cả nhóm vẫn dùng Message.groupId)
+model Conversation {
+  id         String           @id @default(uuid())
+  type       ConversationType
+  name       String?                         // tên nhóm chat con; để null với chat riêng (Frontend hiển thị tên người kia)
+  groupId    String?                         // nhóm đồ án mà nhóm chat con thuộc về; để null với chat riêng (phòng chat riêng của 2 người dùng chung cho mọi nhóm)
+  // privateKey chỉ dùng cho chat riêng: ghép id 2 người theo thứ tự chữ cái (VD "idA_idB")
+  // unique -> mỗi cặp người chỉ có ĐÚNG 1 phòng chat riêng, bấm "Nhắn riêng" nhiều lần cũng không tạo trùng
+  // Nhóm chat con để null (Postgres cho phép nhiều dòng null trong cột unique)
+  privateKey String?          @unique
+  createdBy  String                          // ai tạo phòng này
+  createdAt  DateTime         @default(now())
+
+  // MỚI THÊM: onDelete: Cascade -> xóa nhóm đồ án thì các nhóm chat con của nhóm đó bị xóa theo, tránh lỗi khóa ngoại khi xóa nhóm
+  group    Group?               @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  creator  User                 @relation("ConversationCreator", fields: [createdBy], references: [id])
+  members  ConversationMember[]
+  messages Message[]
+
+  @@map("conversations")
+}
+
+// MỚI THÊM: bảng trung gian - ai đang ở trong phòng chat nào
+model ConversationMember {
+  id             String   @id @default(uuid())
+  conversationId String
+  userId         String
+  joinedAt       DateTime @default(now())
+
+  // onDelete: Cascade -> xóa phòng chat thì danh sách thành viên của phòng cũng bị xóa theo
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  user         User         @relation(fields: [userId], references: [id])
+
+  @@unique([conversationId, userId])         // 1 người không bị thêm trùng vào cùng 1 phòng
+  @@map("conversation_members")
+}
+
+// MỚI THÊM: trạng thái của 1 quan hệ kết bạn
+// Chỉ có 2 trạng thái: từ chối / hủy lời mời / hủy kết bạn đều XÓA luôn bản ghi, nên không cần trạng thái DECLINED
+enum FriendStatus {
+  PENDING   // đã gửi lời mời, đang chờ người nhận bấm Đồng ý
+  ACCEPTED  // đã là bạn bè
+}
+
+// MỚI THÊM: 1 quan hệ kết bạn giữa 2 người (lời mời đang chờ hoặc đã là bạn bè)
+model Friendship {
+  id          String       @id @default(uuid())
+  requesterId String                          // người gửi lời mời
+  addresseeId String                          // người nhận lời mời
+  status      FriendStatus @default(PENDING)
+  // pairKey: id 2 người ghép theo thứ tự chữ cái (VD "idA_idB") - unique -> mỗi cặp người chỉ có đúng 1 bản ghi,
+  // dù A mời B hay B mời A, nên không bao giờ có 2 lời mời chéo nhau hoặc lời mời trùng
+  pairKey     String       @unique
+  createdAt   DateTime     @default(now())
+
+  requester User @relation("FriendshipRequester", fields: [requesterId], references: [id])
+  addressee User @relation("FriendshipAddressee", fields: [addresseeId], references: [id])
+
+  @@map("friendships")
+}
+
+// Đại diện cho 1 "mốc" trong tiến trình đồ án, ví dụ: Đề cương, Chương 1, Bảo vệ...
+// MỚI SỬA: thêm parentId (self-relation) để tạo CÂY mốc - 1 Mốc lớn (VD "Chương 1") có thể chứa nhiều Mốc nhỏ bên trong
+model Milestone {
+  id          String    @id @default(uuid())
+  title       String                          // tên mốc, VD "Chương 1: Giới thiệu"
+  description String?
+  dueDate     DateTime?                       // hạn chót của mốc này
+  order       Int       @default(0)           // thứ tự hiển thị GIỮA CÁC MỐC CÙNG CẤP (cùng parentId)
+  groupId     String
+  parentId    String?                         // MỚI THÊM: trỏ tới Mốc cha - null nghĩa là Mốc gốc (mốc lớn nhất)
+  createdAt   DateTime  @default(now())
+
+  group Group  @relation(fields: [groupId], references: [id])
+  tasks Task[]                                 // các task được gắn TRỰC TIẾP vào mốc này (không bắt buộc)
+  comments Comment[]
+
+  // MỚI THÊM: quan hệ tự tham chiếu (self-relation) - 1 mốc có 1 mốc cha (parent) và nhiều mốc con (children)
+  parent   Milestone?  @relation("MilestoneTree", fields: [parentId], references: [id])
+  children Milestone[] @relation("MilestoneTree")
+
+  @@map("milestones")
+}
+
+// Model lưu 1 thông báo gửi cho 1 người dùng cụ thể
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String                          // thông báo này gửi cho ai
+  type      String                          // loại thông báo: task_assigned, promoted_leader, removed_from_group, deadline_reminder, supervisor_invited, group_invite (MỚI THÊM)
+  content   String                          // nội dung hiển thị, VD "Bạn được giao task Thiết kế database"
+  groupId   String?                         // nhóm liên quan (để bấm vào thông báo điều hướng tới đúng nhóm), có thể null
+  referenceId String?                       // MỚI THÊM: id của GroupMember hoặc GroupSupervisor đang chờ đồng ý, dùng khi bấm nút Đồng ý/Từ chối
+  isRead    Boolean  @default(false)        // đã đọc hay chưa
+  createdAt DateTime @default(now())        // thời điểm tạo
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@map("notifications")
+}
+
+// Model lưu 1 bình luận - có thể gắn vào 1 Task HOẶC 1 Milestone (chỉ 1 trong 2, không cả hai)
+// Thiết kế linh hoạt này giúp tái sử dụng cho tính năng "Giảng viên nhận xét theo mốc" sau này
+model Comment {
+  id          String    @id @default(uuid())
+  content     String
+  authorId    String                          // ai viết bình luận này
+  taskId      String?                         // gắn vào Task nào (có thể để trống)
+  milestoneId String?                         // gắn vào Milestone nào (có thể để trống)
+  createdAt   DateTime  @default(now())
+
+  author    User       @relation(fields: [authorId], references: [id])
+  task      Task?      @relation(fields: [taskId], references: [id])
+  milestone Milestone? @relation(fields: [milestoneId], references: [id])
+
+  @@map("comments")
+}
+
+// Model lưu 1 file đính kèm cho 1 Task
+model Attachment {
+  id         String   @id @default(uuid())
+  fileName   String                          // tên file gốc, VD "Chuong1.docx"
+  filePath   String                          // đường dẫn file thật trên server
+  fileSize   Int                             // dung lượng file (byte), để hiển thị cho người dùng biết
+  taskId     String
+  uploadedBy String
+  createdAt  DateTime @default(now())
+
+  task     Task @relation(fields: [taskId], references: [id])
+  uploader User @relation(fields: [uploadedBy], references: [id])
+
+  @@map("attachments")
+}
+
+// MỚI THÊM: Lịch sử hoạt động của nhóm - mỗi dòng là 1 việc đã xảy ra (ai làm gì, lúc nào)
+// summary là câu chữ ĐÃ GHI SẴN lúc xảy ra sự kiện, nên vẫn đọc được dù task/mốc đó sau này bị xóa
+model ActivityLog {
+  id         String   @id @default(uuid())
+  groupId    String
+  actorId    String                         // người thực hiện
+  type       String                         // loại sự kiện, ví dụ "task.status_changed"
+  targetType String                         // đối tượng bị tác động: "task" | "milestone" | "member" | "comment"
+  targetId   String?                        // id của đối tượng (không ràng buộc khóa ngoại, vì đối tượng có thể đã bị xóa)
+  summary    String                         // câu mô tả tiếng Việt
+  createdAt  DateTime @default(now())
+
+  group Group @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  actor User  @relation(fields: [actorId], references: [id])
+
+  @@index([groupId, createdAt])
+  @@map("activity_logs")
+}

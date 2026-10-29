@@ -1,0 +1,1256 @@
+/* ===== Tab "Tiến độ theo mốc" - dạng CÂY (giống cây thư mục) + bảng tổng quan bên phải (viết lại ở v18) =====
+   Mọi màu dùng var(--color-*) của theme; riêng màu trạng thái (xanh/cam/xanh dương) là màu ngữ nghĩa cố định */
+
+.timeline-view {
+  /* MỚI SỬA: căn GIỮA trang (margin auto) thay vì dính lề trái, rộng tối đa 1320px */
+  max-width: 1320px;
+  margin: 0 auto;
+  --ms-ok: #3FAE76;
+  --ms-doing: #2F7DF6;
+  --ms-redo: #F97316;
+  --ms-idle: #8A97AB;
+  /* MỚI THÊM: đường nhánh cây ĐẬM và RÕ hơn; viền các ô thì MỜ hơn */
+  --ms-line: color-mix(in srgb, var(--color-text-muted) 75%, transparent);
+  --ms-soft-border: color-mix(in srgb, var(--color-border) 50%, transparent);
+}
+
+/* 2 cột - trái là cây mốc (co giãn), phải là bảng tổng quan rộng cố định 340px */
+.ms-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 340px;
+  gap: 32px;
+  align-items: start;
+}
+
+.ms-main {
+  min-width: 0;
+}
+
+.timeline-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.timeline-title {
+  font-size: 21px;
+  font-weight: 700;
+  color: var(--color-text);
+  margin: 0;
+}
+
+/* Cụm nút "Mở rộng tất cả / Thu gọn tất cả / + Thêm mốc" */
+.tr-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.tr-link-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+}
+
+.tr-link-btn:hover {
+  color: var(--color-accent);
+  text-decoration: underline;
+}
+
+.timeline-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* Thông báo lỗi khi xóa mốc thất bại (thay cho alert) */
+.ms-error {
+  margin-bottom: 14px;
+  padding: 9px 12px;
+  font-size: 13.5px;
+  color: var(--color-danger, #D14343);
+  background: color-mix(in srgb, var(--color-danger, #D14343) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--color-danger, #D14343) 35%, transparent);
+  border-radius: 8px;
+}
+
+/* ===== CÂY MỐC: mỗi mốc là 1 dòng, mở ra thì hiện nội dung bên dưới ===== */
+.tr-node {
+  position: relative;
+  border-radius: 8px;
+}
+
+/* Dòng của mốc - các cột bên phải rộng CỐ ĐỊNH nên thẳng hàng giữa mọi dòng */
+.tr-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 12px;
+  border-radius: 10px;
+  /* MỚI SỬA: mốc con cũng có ô riêng, viền MỜ + vạch màu trạng thái bên trái */
+  background: var(--color-surface-subtle);
+  border: 1px solid var(--ms-soft-border);
+  border-left: 4px solid var(--ms-idle);
+  cursor: pointer;
+  user-select: none;
+}
+
+.tr-row:hover {
+  background: var(--color-surface-subtle-2);
+}
+
+/* Mốc GỐC: dòng có nền nhạt + chữ lớn hơn để nhìn ra ngay "giai đoạn" */
+.tr-depth-0 > .tr-row {
+  /* mốc GỐC: nền pha chút màu nhấn để nổi hơn mốc con */
+  background: color-mix(in srgb, var(--color-accent) 7%, var(--color-surface-subtle));
+  padding: 14px 14px;
+}
+
+.tr-depth-0 > .tr-row:hover {
+  background: var(--color-surface-subtle-2);
+}
+
+.tr-chevron {
+  width: 22px;
+  flex-shrink: 0;
+  text-align: center;
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--color-text);
+  transition: transform 0.15s ease;
+}
+
+.tr-chevron-open {
+  transform: rotate(90deg);
+}
+
+/* Chấm màu trạng thái của mốc */
+.tr-dot {
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  background: var(--ms-idle);
+}
+
+.tr-dot-doing {
+  background: var(--ms-doing);
+}
+
+.tr-dot-done {
+  background: var(--ms-ok);
+}
+
+/* Vạch màu bên trái cả dòng đổi theo trạng thái (dùng :has, Chrome/Edge/Safari/Firefox mới đều hỗ trợ) */
+.tr-node:has(> .tr-row .tr-dot-doing) > .tr-row {
+  border-left-color: var(--ms-doing);
+}
+
+.tr-node:has(> .tr-row .tr-dot-done) > .tr-row {
+  border-left-color: var(--ms-ok);
+}
+
+.tr-node:has(> .tr-row .tr-dot-overdue) > .tr-row {
+  border-left-color: var(--color-danger, #D14343);
+}
+
+.tr-dot-overdue {
+  background: var(--color-danger, #D14343);
+}
+
+.tr-title {
+  flex: 1;
+  min-width: 0;
+  font-size: 15.5px;
+  font-weight: 700;
+  color: var(--color-text);
+  /* cho tên mốc dài xuống dòng thay vì bị cắt thành "..." */
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.tr-depth-0 > .tr-row .tr-title {
+  font-size: 17px;
+  font-weight: 800;
+}
+
+/* Cụm cột bên phải */
+.tr-cols {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.tr-progress {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 124px;
+}
+
+.tr-progress-track {
+  flex: 1;
+  height: 9px;
+  background: color-mix(in srgb, var(--color-text-muted) 28%, transparent);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.tr-depth-0 > .tr-row .tr-progress-track {
+  background: color-mix(in srgb, var(--color-text-muted) 32%, transparent);
+}
+
+.tr-progress-fill {
+  height: 100%;
+  background: var(--color-accent);
+  border-radius: 999px;
+  transition: width 0.3s ease;
+}
+
+.tr-progress-fill-done {
+  background: var(--ms-ok);
+}
+
+.tr-percent {
+  width: 40px;
+  text-align: right;
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--color-text);
+}
+
+.tr-count {
+  width: 84px;
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  white-space: nowrap;
+}
+
+.tr-due {
+  width: 90px;
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  white-space: nowrap;
+}
+
+.tr-due-overdue {
+  color: var(--color-danger, #D14343);
+  font-weight: 700;
+}
+
+/* Huy hiệu rộng cố định để các dòng thẳng cột */
+.tr-cols .ms-badge {
+  width: 106px;
+  text-align: center;
+}
+
+/* Nút thao tác: mờ, rõ lên khi rê chuột vào dòng */
+.tr-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+  opacity: 0.55;
+  transition: opacity 0.15s ease;
+}
+
+.tr-row:hover .tr-actions {
+  opacity: 1;
+}
+
+/* Phần mở rộng của 1 mốc: thụt vào thẳng dưới tên mốc */
+.tr-body {
+  padding: 8px 0 8px 32px;
+}
+
+.tr-desc {
+  margin: 4px 0 8px;
+  font-size: 13.5px;
+  color: var(--color-text-secondary);
+}
+
+.tr-task-caption {
+  margin: 6px 0 4px;
+  font-size: 12.5px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+/* Chữ phần nhận xét to hơn cho cân với cây mốc (ghi đè milestone-comment.css) */
+.tr-body .ms-comment-toggle {
+  font-size: 14px;
+}
+
+.tr-body .ms-comment-content,
+.tr-body .ms-comment-author {
+  font-size: 14px;
+}
+
+/* Nhận xét nằm thẳng hàng với nội dung */
+.tr-body .ms-comment {
+  margin: 8px 0 4px;
+}
+
+/* Mốc con: thụt vào, có ĐƯỜNG KẺ DỌC bên trái và nhánh ngang nối tới từng mốc con (đúng kiểu cây thư mục) */
+.tr-children {
+  margin: 10px 0 0 10px;
+  padding-left: 26px;
+  border-left: 2px solid var(--ms-line);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.tr-children > .tr-node::before {
+  content: '';
+  position: absolute;
+  left: -26px;
+  top: 24px;
+  width: 22px;
+  border-top: 2px solid var(--ms-line);
+}
+
+/* Nháy sáng khi cuộn tới từ bảng tổng quan */
+.tr-flash > .tr-row {
+  animation: tr-flash-anim 1.4s ease;
+}
+
+@keyframes tr-flash-anim {
+  0%, 60% {
+    background: var(--color-accent-soft-bg);
+  }
+  100% {
+    background: transparent;
+  }
+}
+
+/* Huy hiệu trạng thái của mốc */
+.ms-badge {
+  font-size: 12.5px;
+  font-weight: 700;
+  padding: 4px 11px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.ms-badge-idle {
+  background: color-mix(in srgb, var(--ms-idle) 24%, transparent);
+  color: var(--color-text);
+}
+
+.ms-badge-doing {
+  background: color-mix(in srgb, var(--ms-doing) 26%, transparent);
+  color: color-mix(in srgb, var(--ms-doing) 70%, var(--color-text));
+}
+
+.ms-badge-done {
+  background: color-mix(in srgb, var(--ms-ok) 28%, transparent);
+  color: color-mix(in srgb, var(--ms-ok) 65%, var(--color-text));
+}
+
+.ms-badge-overdue {
+  background: color-mix(in srgb, var(--color-danger, #D14343) 26%, transparent);
+  color: color-mix(in srgb, var(--color-danger, #D14343) 70%, var(--color-text));
+}
+
+.milestone-add-child-btn {
+  background: none;
+  border: 1px solid var(--color-accent-soft-border);
+  color: var(--color-accent);
+  font-size: 13px;
+  font-weight: 700;
+  padding: 4px 12px;
+  border-radius: 7px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.milestone-add-child-btn:hover {
+  background: var(--color-accent-soft-bg);
+}
+
+.ms-delete-btn {
+  background: none;
+  border: none;
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+}
+
+.ms-delete-btn:hover {
+  color: var(--color-danger, #D14343);
+}
+
+.ms-task-list,
+.ms-subtasks {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+/* Danh sách việc con: thụt vào, ĐƯỜNG KẺ DỌC đậm bên trái */
+.ms-subtasks {
+  position: relative;
+  margin: 8px 0 2px 9px;
+  padding-left: 24px;
+  border-left: 2px solid var(--ms-line);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.ms-task-list {
+  margin-top: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* ----- VIỆC CHA - mỗi việc cha là 1 khối riêng có nền nhạt, chữ đậm ----- */
+.ms-task-parent {
+  padding: 9px 12px;
+  background: var(--color-surface-subtle);
+  border: 1px solid var(--ms-soft-border);
+  border-radius: 9px;
+}
+
+.ms-task-parent:hover {
+  background: var(--color-surface-subtle-2);
+}
+
+.ms-task-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+}
+
+/* Bên trái: biểu tượng + tên + đếm việc con + tag (cùng 1 hàng, tự xuống dòng khi hẹp) */
+.ms-task-main {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px 8px;
+  min-width: 0;
+  flex: 1 1 280px;
+}
+
+/* Bên phải: người phụ trách + hạn + trạng thái */
+.ms-task-side {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-shrink: 0;
+}
+
+.ms-task-title {
+  font-size: 14.5px;
+  font-weight: 700;       /* việc cha: đậm */
+  color: var(--color-text);
+  word-break: break-word;
+}
+
+.ms-task-title-done {
+  text-decoration: line-through;
+  color: var(--color-text-muted);
+  font-weight: 600;
+}
+
+/* Biểu tượng việc cha: Ô VUÔNG bo góc (đổi màu theo trạng thái, đã xong có dấu ✓) */
+.ms-task-icon {
+  width: 18px;
+  height: 18px;
+  border-radius: 5px;
+  border: 2px solid var(--ms-idle);
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 800;
+  color: #fff;
+}
+
+.ms-task-icon-doing {
+  border-color: var(--ms-doing);
+}
+
+.ms-task-icon-redo {
+  border-color: var(--ms-redo);
+}
+
+.ms-task-icon-done {
+  background: var(--ms-ok);
+  border-color: var(--ms-ok);
+}
+
+/* Bộ đếm "2/4 việc con" cạnh tên việc cha */
+.ms-sub-count {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--color-text);
+  background: color-mix(in srgb, var(--color-text-muted) 20%, transparent);
+  border-radius: 999px;
+  padding: 2px 9px;
+  white-space: nowrap;
+}
+
+/* ----- VIỆC CON - biểu tượng TRÒN nhỏ, chữ thường (đường kẻ dọc nằm ở .ms-subtasks phía trên) ----- */
+.ms-task-child {
+  position: relative;
+  padding: 6px 8px;
+  border-radius: 7px;
+}
+
+/* Nhánh ngang nối từ đường dọc tới từng việc con */
+.ms-task-child::before {
+  content: '';
+  position: absolute;
+  left: -24px;
+  top: 19px;
+  width: 18px;
+  border-top: 2px solid var(--ms-line);
+}
+
+.ms-task-child:hover {
+  background: var(--color-surface-subtle-2);
+}
+
+.ms-task-child .ms-task-title {
+  font-size: 14px;
+  font-weight: 500;       /* việc con: chữ thường */
+}
+
+.ms-task-icon-child {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border-width: 2px;
+  font-size: 8px;
+}
+
+/* Ghi chú khi việc con có việc cha nằm ở mốc khác */
+.ms-orphan-note {
+  margin: 3px 0 0 24px;
+  font-size: 12.5px;
+  color: var(--color-text-muted);
+}
+
+/* ----- TAG (nhãn) - mỗi tên 1 màu cố định, tự thích ứng theme nhờ trộn với màu chữ ----- */
+.ms-tag {
+  font-size: 12px;
+  font-weight: 700;
+  padding: 2px 10px;
+  border-radius: 999px;
+  white-space: nowrap;
+  background: hsl(var(--tag-hue) 75% 50% / 0.24);
+  color: color-mix(in srgb, hsl(var(--tag-hue) 80% 50%) 60%, var(--color-text));
+  border: 1px solid hsl(var(--tag-hue) 70% 50% / 0.3);
+}
+
+/* ----- Người phụ trách ----- */
+.ms-assignee {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  width: 156px;
+}
+
+.ms-avatar {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--color-accent-soft-bg);
+  border: 1px solid var(--color-accent-soft-border);
+  color: var(--color-accent);
+  font-size: 10.5px;
+  font-weight: 800;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.ms-assignee-name {
+  font-size: 13px;
+  color: var(--color-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ms-unassigned {
+  width: 156px;
+  font-size: 12.5px;
+  font-style: italic;
+  color: var(--color-text-muted);
+}
+
+.ms-task-deadline {
+  width: 48px;
+  text-align: right;
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  white-space: nowrap;
+}
+
+.ms-task-deadline-overdue {
+  color: var(--color-danger, #D14343);
+  font-weight: 700;
+}
+
+/* Nhãn trạng thái ở cuối dòng việc (rộng cố định để các dòng thẳng cột) */
+.ms-task-status {
+  width: 84px;
+  text-align: right;
+  font-size: 12.5px;
+  font-weight: 700;
+  white-space: nowrap;
+  color: var(--color-text-secondary);
+}
+
+.ms-task-status-doing {
+  color: var(--ms-doing);
+}
+
+.ms-task-status-redo {
+  color: var(--ms-redo);
+}
+
+.ms-task-status-done {
+  color: var(--ms-ok);
+}
+
+/* Gợi ý "mốc này nằm trong mốc nào" ở hộp Thêm mốc (AddMilestoneModal dùng) */
+.milestone-add-hint {
+  font-size: 13.5px;
+  color: var(--color-text-secondary);
+  background: var(--color-surface-subtle);
+  border: 1px solid var(--color-border-light);
+  border-radius: 8px;
+  padding: 8px 12px;
+  margin-bottom: 16px;
+}
+
+/* ===== BẢNG TỔNG QUAN bên phải (dính trên cùng khi cuộn) ===== */
+.ms-panel {
+  position: sticky;
+  top: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.ms-panel-card {
+  background: var(--color-surface-subtle);
+  border: 1px solid var(--ms-soft-border);
+  border-radius: 12px;
+  padding: 18px 20px;
+}
+
+.ms-panel-title {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
+  margin-bottom: 8px;
+}
+
+.ms-panel-big {
+  font-size: 42px;
+  font-weight: 800;
+  line-height: 1.1;
+  color: var(--color-text);
+}
+
+.ms-panel-big span {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--color-text-secondary);
+}
+
+.ms-panel-sub {
+  margin: 2px 0 12px;
+  font-size: 13px;
+  color: var(--color-text-muted);
+}
+
+/* Thanh nhiều đoạn theo trạng thái */
+.ms-stack {
+  display: flex;
+  height: 12px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: color-mix(in srgb, var(--color-text-muted) 25%, transparent);
+}
+
+.ms-stack-seg {
+  height: 100%;
+}
+
+.ms-stack-todo {
+  background: var(--ms-idle);
+}
+
+.ms-stack-doing {
+  background: var(--ms-doing);
+}
+
+.ms-stack-redo {
+  background: var(--ms-redo);
+}
+
+.ms-stack-done {
+  background: var(--ms-ok);
+}
+
+.ms-legend {
+  list-style: none;
+  margin: 12px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.ms-legend li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13.5px;
+}
+
+.ms-legend-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+
+.ms-legend-label {
+  flex: 1;
+  color: var(--color-text-secondary);
+}
+
+.ms-legend-count {
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.ms-panel-empty {
+  margin: 0;
+  font-size: 13.5px;
+  color: var(--color-text-muted);
+}
+
+.ms-alert {
+  font-size: 13.5px;
+  font-weight: 600;
+  padding: 7px 10px;
+  border-radius: 8px;
+  margin-bottom: 8px;
+}
+
+.ms-alert-danger {
+  color: var(--color-danger, #D14343);
+  background: color-mix(in srgb, var(--color-danger, #D14343) 12%, transparent);
+}
+
+.ms-panel-group {
+  margin: 10px 0 4px;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--color-text-secondary);
+}
+
+.ms-panel-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+/* Mỗi mục là 1 nút: bấm để cuộn tới đúng mốc */
+.ms-panel-link {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  background: none;
+  border: none;
+  padding: 5px 6px;
+  border-radius: 6px;
+  cursor: pointer;
+  text-align: left;
+}
+
+.ms-panel-link:hover {
+  background: var(--color-surface-subtle-2);
+}
+
+.ms-panel-link-title {
+  font-size: 13.5px;
+  color: var(--color-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ms-panel-link-date {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  flex-shrink: 0;
+}
+
+.ms-panel-link-date-danger {
+  color: var(--color-danger, #D14343);
+}
+
+/* ===== Màn hình hẹp ===== */
+/* Dưới 1100px thì bảng tổng quan xuống dưới cây mốc (1 cột) */
+@media (max-width: 1100px) {
+  .ms-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .ms-panel {
+    position: static;
+  }
+}
+
+/* ===== Điện thoại / màn hình nhỏ: dòng mốc cho phép xuống dòng, ẩn bớt cột ===== */
+@media (max-width: 760px) {
+  .tr-row {
+    flex-wrap: wrap;
+  }
+
+  .tr-cols {
+    flex-wrap: wrap;
+    gap: 8px 12px;
+    margin-left: 42px;
+    width: 100%;
+  }
+
+  .tr-count,
+  .tr-due {
+    width: auto;
+  }
+
+  .tr-children {
+    padding-left: 16px;
+  }
+
+  .tr-children > .tr-node::before {
+    left: -16px;
+    width: 12px;
+  }
+
+  .tr-body {
+    padding-left: 12px;
+  }
+}
+
+/* ===== MỚI THÊM (Đợt A): thanh tìm kiếm + lọc, ô vuông bấm được ===== */
+.ms-filter {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.ms-filter-search {
+  position: relative;
+  flex: 1 1 220px;
+  min-width: 180px;
+}
+
+.ms-filter-icon {
+  position: absolute;
+  left: 11px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 13px;
+  pointer-events: none;
+}
+
+/* Ghi đè hẳn nền/chữ/viền để không bị kiểu input mặc định (nền trắng) làm vỡ giao diện */
+.ms-filter-search input,
+.ms-filter select {
+  box-sizing: border-box;
+  height: 36px;
+  font-size: 14px;
+  font-family: inherit;
+  color: var(--color-text);
+  background: var(--color-surface-subtle);
+  border: 1px solid var(--ms-soft-border);
+  border-radius: 8px;
+  outline: none;
+}
+
+.ms-filter-search input {
+  width: 100%;
+  padding: 0 12px 0 34px;
+}
+
+.ms-filter select {
+  padding: 0 10px;
+  cursor: pointer;
+}
+
+.ms-filter select option {
+  background: var(--color-surface);
+  color: var(--color-text);
+}
+
+.ms-filter-search input::placeholder {
+  color: var(--color-text-muted);
+}
+
+.ms-filter-search input:focus,
+.ms-filter select:focus {
+  border-color: var(--color-accent);
+}
+
+.ms-filter-count {
+  font-size: 13px;
+  color: var(--color-text-muted);
+}
+
+/* Ô vuông của việc là nút: bỏ nền mặc định của button (trừ việc đã xong giữ nền xanh) */
+.ms-task-icon-btn {
+  padding: 0;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.ms-task-icon-btn:not(.ms-task-icon-done) {
+  background: transparent;
+}
+
+.ms-task-icon-btn:hover:not(:disabled) {
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--ms-ok) 30%, transparent);
+}
+
+.ms-task-icon-btn:disabled {
+  opacity: 0.5;
+  cursor: wait;
+}
+
+/* ===== MỚI THÊM (Đợt A - mục 4): thêm công việc / việc con ngay trong mốc ===== */
+.tr-task-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin: 6px 0 4px;
+}
+
+.tr-task-head .tr-task-caption {
+  margin: 0;
+}
+
+/* Nút "+ Việc con" nhỏ hơn nút "+ Công việc", mờ nhẹ cho đỡ rối, rõ lên khi rê chuột vào việc */
+.ms-add-sub {
+  padding: 1px 9px;
+  font-size: 12px;
+  opacity: 0.6;
+}
+
+.ms-task-parent:hover .ms-add-sub,
+.ms-add-sub:focus-visible {
+  opacity: 1;
+}
+
+/* Form trong hộp thêm công việc: ghi đè hẳn nền/chữ/viền để không bị nền trắng mặc định */
+.ct-form .auth-field select,
+.ct-form .auth-field textarea {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 10px 12px;
+  font-family: inherit;
+  font-size: 14px;
+  color: var(--color-text);
+  background: var(--color-surface-subtle);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  outline: none;
+  resize: vertical;
+}
+
+.ct-form .auth-field select option {
+  background: var(--color-surface);
+  color: var(--color-text);
+}
+
+.ct-form .auth-field select:focus,
+.ct-form .auth-field textarea:focus {
+  border-color: var(--color-accent);
+}
+
+.ct-row {
+  display: flex;
+  gap: 12px;
+}
+
+.ct-row .auth-field {
+  flex: 1;
+  min-width: 0;
+}
+
+
+/* ===== MỚI THÊM: GỐC CÂY = tên dự án + đường kẻ dọc nối các mốc lớn với nhau ===== */
+.pj-head {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 18px;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--color-accent) 12%, var(--color-surface-subtle));
+  border: 1px solid var(--ms-soft-border);
+  border-left: 5px solid var(--color-accent);
+}
+
+.pj-mark {
+  flex-shrink: 0;
+  font-size: 20px;
+  line-height: 1;
+  color: var(--color-accent);
+}
+
+.pj-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.pj-name {
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--color-text);
+  overflow-wrap: anywhere;
+}
+
+.pj-meta {
+  margin-top: 3px;
+  font-size: 13px;
+  color: var(--color-text-secondary);
+}
+
+.pj-progress {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 170px;
+  flex-shrink: 0;
+}
+
+/* Các mốc lớn treo dưới gốc: đường dọc đậm bên trái + nhánh ngang tới từng mốc (giống mốc con) */
+.timeline-list {
+  margin: 12px 0 0 16px;
+  padding-left: 30px;
+  border-left: 2px solid var(--ms-line);
+  gap: 14px;
+}
+
+.timeline-list > .tr-node::before {
+  content: '';
+  position: absolute;
+  left: -30px;
+  top: 26px;
+  width: 26px;
+  border-top: 2px solid var(--ms-line);
+}
+
+@media (max-width: 760px) {
+  .pj-head {
+    flex-wrap: wrap;
+  }
+
+  .pj-progress {
+    width: 100%;
+  }
+
+  .timeline-list {
+    margin-left: 8px;
+    padding-left: 18px;
+  }
+
+  .timeline-list > .tr-node::before {
+    left: -18px;
+    width: 14px;
+  }
+}
+
+
+/* ===== MỚI THÊM (Đợt B): nút Sửa + kéo-thả mốc ===== */
+.ms-edit-btn {
+  background: none;
+  border: none;
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+}
+
+.ms-edit-btn:hover {
+  color: var(--color-accent);
+}
+
+/* Tay nắm kéo ⋮⋮ ở đầu dòng mốc */
+.tr-grip {
+  flex-shrink: 0;
+  width: 10px;
+  font-size: 14px;
+  letter-spacing: -3px;
+  line-height: 1;
+  color: var(--color-text-muted);
+  cursor: grab;
+  opacity: 0.55;
+}
+
+.tr-row:hover .tr-grip {
+  opacity: 1;
+}
+
+/* Mốc đang bị kéo: mờ đi */
+.tr-node-dragging > .tr-row {
+  opacity: 0.4;
+}
+
+/* Chỉ báo chỗ sẽ thả: vạch xanh phía TRÊN / phía DƯỚI dòng, hoặc khung nét đứt khi thả VÀO BÊN TRONG */
+.tr-row.dnd-before {
+  box-shadow: 0 -4px 0 0 var(--color-accent);
+}
+
+.tr-row.dnd-after {
+  box-shadow: 0 4px 0 0 var(--color-accent);
+}
+
+.tr-row.dnd-into {
+  outline: 2px dashed var(--color-accent);
+  outline-offset: 2px;
+  background: var(--color-accent-soft-bg);
+}
+
+
+/* ===== MỚI THÊM (Đợt C): bảng tổng quan - theo thành viên + hoàn thành theo tuần ===== */
+.ms-people {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.ms-person-top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 5px;
+}
+
+.ms-person-name {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--color-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ms-person-count {
+  flex-shrink: 0;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--color-text-secondary);
+}
+
+.ms-person-track {
+  height: 8px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--color-text-muted) 25%, transparent);
+  overflow: hidden;
+}
+
+.ms-person-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: var(--ms-ok);
+  transition: width 0.3s ease;
+}
+
+/* Biểu đồ cột theo tuần: mỗi cột 1 tuần, số việc nằm trên đầu cột, ngày bắt đầu tuần nằm dưới */
+.ms-weeks {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 8px;
+  height: 112px;
+  padding-top: 4px;
+}
+
+.ms-week {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
+  min-width: 0;
+}
+
+.ms-week-count {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.ms-week-bar {
+  width: 100%;
+  max-width: 34px;
+  border-radius: 5px 5px 0 0;
+  background: var(--color-accent);
+}
+
+.ms-week-label {
+  font-size: 11.5px;
+  color: var(--color-text-muted);
+}
+/* ===== MỚI THÊM (Phiên 12): trạng thái "Kiểm định" (màu tím) ===== */
+.timeline-view {
+  --ms-review: #8B5CF6;
+}
+
+/* Ô vuông của việc đang Kiểm định: viền + dấu "…" màu tím (nền vẫn trong suốt như các trạng thái chưa xong) */
+.ms-task-icon-review {
+  border-color: var(--ms-review);
+  color: var(--ms-review);
+}
+
+.ms-task-status-review {
+  color: var(--ms-review);
+}
+
+.ms-stack-review {
+  background: var(--ms-review);
+}
+
+/* Nhãn "Danh sách công việc" dài hơn "Chưa làm" nên mở rộng cột trạng thái để không đè lên cột hạn chót */
+.ms-task-status {
+  width: 140px;
+}

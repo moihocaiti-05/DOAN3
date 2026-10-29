@@ -1,0 +1,322 @@
+/* ===== Hộp "Sắp đến hạn" trên trang Giảng viên (tính năng 5) =====
+   Thanh gọn một dòng (.ud-bar) + cửa sổ danh sách (.ud-overlay / .ud-modal).
+   MỚI SỬA: danh sách chia theo từng nhóm (.ud-group, tiêu đề nhóm, tên nhóm).
+   Class bắt đầu bằng "ud-" để không trùng với CSS khác. Chỉ dùng biến theme có thật. */
+
+/* Thanh gọn một dòng thay cho hộp dài cũ */
+.ud-bar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  background: var(--color-surface, #FFFFFF);
+  border: 1px solid var(--color-border, #E5E7EB);
+  border-radius: 10px;
+  padding: 10px 16px;
+  margin-bottom: 20px;
+}
+
+/* Nút "Xem danh sách" */
+.ud-open-btn {
+  padding: 5px 14px;
+  font-size: 13px;
+  font-family: inherit;
+  font-weight: 600;
+  color: var(--color-text, #151B26);
+  background: transparent;
+  border: 1px solid var(--color-border, #E5E7EB);
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.ud-open-btn:hover {
+  border-color: var(--color-accent, #FC636B);
+  background: var(--color-accent-soft-bg, #FFF0F1);
+}
+
+/* Nền tối phủ toàn màn hình */
+.ud-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: var(--color-overlay, rgba(0, 0, 0, 0.45));
+}
+
+/* Khung cửa sổ rộng 1000px, cao tối đa 90% màn hình, phần danh sách tự cuộn */
+.ud-modal {
+  display: flex;
+  flex-direction: column;
+  width: min(1000px, 100%);
+  max-height: 90vh;
+  background: var(--color-surface, #FFFFFF);
+  border: 1px solid var(--color-border, #E5E7EB);
+  border-radius: 12px;
+  padding: 20px 24px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25);
+}
+
+.ud-modal-header {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+/* Tiêu đề trong cửa sổ lớn hơn tiêu đề trên thanh gọn */
+.ud-modal-header .ud-title {
+  font-size: 18px;
+}
+
+.ud-modal-body {
+  flex: 1;
+  min-height: 0; /* cho phép phần này co lại và cuộn thay vì đẩy cửa sổ tràn màn hình */
+  overflow-y: auto;
+}
+
+.ud-close {
+  width: 28px;
+  height: 28px;
+  font-size: 14px;
+  font-family: inherit;
+  color: var(--color-text-secondary, #5B6472);
+  background: transparent;
+  border: 1px solid var(--color-border, #E5E7EB);
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.ud-close:hover {
+  border-color: var(--color-accent, #FC636B);
+  color: var(--color-text, #151B26);
+}
+
+.ud-title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--color-text, #151B26);
+}
+
+/* Dòng tóm tắt: "3 đã trễ · 5 trong 7 ngày tới" */
+.ud-summary {
+  font-size: 13px;
+  color: var(--color-text-secondary, #5B6472);
+}
+
+.ud-summary-late {
+  color: var(--color-danger, #D14343);
+  font-weight: 600;
+}
+
+.ud-spacer {
+  flex: 1;
+}
+
+/* Hàng chọn khoảng ngày + ô ẩn việc trễ */
+.ud-controls {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.ud-chip {
+  padding: 5px 14px;
+  font-size: 13px;
+  font-family: inherit;
+  color: var(--color-text-secondary, #5B6472);
+  background: transparent;
+  border: 1px solid var(--color-border, #E5E7EB);
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.ud-chip:hover {
+  border-color: var(--color-accent, #FC636B);
+}
+
+.ud-chip-active {
+  background: var(--color-accent-soft-bg, #FFF0F1);
+  border-color: var(--color-accent-soft-border, #FBC4C8);
+  color: var(--color-text, #151B26);
+}
+
+.ud-check {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--color-text-secondary, #5B6472);
+  cursor: pointer;
+}
+
+/* MỚI THÊM: mỗi nhóm là một khối, các khối cách nhau cho dễ phân biệt */
+.ud-group {
+  margin-bottom: 18px;
+}
+
+/* MỚI THÊM: tiêu đề nhóm (tên nhóm bên trái, tóm tắt bên cạnh), bấm để mở trang nhóm */
+.ud-group-head {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: var(--color-surface-subtle, #F7F8FA);
+  cursor: pointer;
+}
+
+.ud-group-head:hover {
+  background: var(--color-surface-subtle-2, #EEF0F3);
+}
+
+.ud-group-name {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--color-text, #151B26);
+}
+
+/* Đang tải lại khi đổi khoảng ngày: làm mờ danh sách cũ thay vì xóa trắng */
+.ud-list-loading {
+  opacity: 0.5;
+}
+
+.ud-list {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Mỗi dòng cao hơn một chút cho dễ nhìn */
+.ud-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 13px 10px;
+  border-top: 1px solid var(--color-border-light, #F0F2F5);
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.ud-item:hover {
+  background: var(--color-surface-subtle, #F7F8FA);
+}
+
+.ud-item-main {
+  min-width: 0; /* cho phép chữ dài tự cắt thay vì đẩy tràn khung */
+}
+
+.ud-item-top {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Nhãn loại: "Việc" hoặc "Mốc" */
+.ud-kind {
+  flex-shrink: 0;
+  padding: 1px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  background: var(--color-surface-subtle-2, #EEF0F3);
+  color: var(--color-text-secondary, #5B6472);
+}
+
+.ud-kind-milestone {
+  background: var(--color-accent-soft-bg, #FFF0F1);
+  color: var(--color-text, #151B26);
+}
+
+.ud-item-title {
+  margin: 0;
+  font-size: 14.5px;
+  font-weight: 600;
+  color: var(--color-text, #151B26);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ud-item-sub {
+  margin: 3px 0 0;
+  font-size: 12.5px;
+  color: var(--color-text-secondary, #5B6472);
+}
+
+/* Cột bên phải: huy hiệu còn bao lâu + ngày hạn */
+.ud-item-side {
+  flex-shrink: 0;
+  text-align: right;
+}
+
+.ud-when {
+  --ud-when-color: #2F9E6B;
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  color: var(--color-text, #151B26);
+  background: color-mix(in srgb, var(--ud-when-color) 16%, transparent);
+}
+
+.ud-when-late {
+  --ud-when-color: var(--color-danger, #D14343);
+}
+
+.ud-when-today {
+  --ud-when-color: #D99A1E;
+}
+
+.ud-when-soon {
+  --ud-when-color: #D99A1E;
+}
+
+.ud-date {
+  margin: 3px 0 0;
+  font-size: 12px;
+  color: var(--color-text-muted, #8A93A0);
+}
+
+.ud-more {
+  margin-top: 8px;
+  padding: 6px 14px;
+  font-size: 13px;
+  font-family: inherit;
+  color: var(--color-text-secondary, #5B6472);
+  background: transparent;
+  border: 1px solid var(--color-border, #E5E7EB);
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.ud-more:hover {
+  border-color: var(--color-accent, #FC636B);
+}
+
+.ud-empty {
+  margin: 8px 0 0;
+  font-size: 13px;
+  color: var(--color-text-muted, #8A93A0);
+}
+
+.ud-error {
+  margin: 8px 0 0;
+  font-size: 13px;
+  color: var(--color-danger, #D14343);
+}
+
+/* Câu báo lỗi nằm trên thanh gọn thì không cần khoảng cách phía trên */
+.ud-error-inline {
+  margin: 0;
+}

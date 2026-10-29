@@ -1,0 +1,314 @@
+# Dự án: Website quản lý công việc nhóm hỗ trợ đồ án và khóa luận — Prompt bàn giao v15
+
+> **Cách dùng:** đọc toàn bộ file này trước khi làm bất cứ việc gì.
+> File gộp tiến độ của nhiều phiên làm việc (từ v3 đến v15, trong đó v14 do một phiên khác làm, v15 thêm phần chat, kết bạn, thông báo kết bạn và hộp xác nhận tự làm).
+> Người dùng phát triển song song ở nhiều phiên AI khác nhau, nên **code thật trên máy họ có thể khác với những gì file này mô tả**. Luôn xin file hiện tại trước khi sửa (xem Quy tắc 1 và mục 12).
+
+---
+
+## 1. Bối cảnh dự án
+
+Người dùng là sinh viên ngành Kỹ thuật phần mềm (còn mới học), đang làm **Đồ án 3**, nhóm 2 người, thời gian 10–12 tuần.
+
+**Đề tài:** website quản lý công việc nhóm hỗ trợ đồ án và khóa luận — phân công công việc, theo dõi tiến độ theo mốc học thuật, chat nhóm, giảng viên hướng dẫn theo dõi và nhận xét.
+
+**Ba vai trò đã cam kết với giáo viên:** Sinh viên (thành viên), Trưởng nhóm (người tạo nhóm), Giảng viên hướng dẫn.
+- Trưởng nhóm và Thành viên **không** lưu ở bảng `User` mà ở bảng trung gian `GroupMember.role` (`"leader"` hoặc `"member"`). Ai tạo nhóm tự động là leader của nhóm đó.
+- Giảng viên là một loại **tài khoản** (`User.role = GIANG_VIEN`), gắn với nhóm qua bảng riêng `GroupSupervisor`, **không** nằm trong `GroupMember`.
+
+**Định hướng:** không bắt chước độ phức tạp của Asana hay ClickUp, chỉ lấy cảm hứng thẩm mỹ: nền trắng (mặc định, có thể đổi theme), chữ `#151B26`, màu nhấn coral `#FC636B`, bo góc mềm, tối giản. Phương pháp làm việc là **Vertical Slice**: làm trọn Backend và Frontend của một chức năng rồi mới sang chức năng tiếp theo. Người dùng đã chủ động mở rộng phạm vi rất nhiều và chấp nhận rủi ro về thời gian.
+
+---
+
+## 2. Quy tắc làm việc (người dùng đã nhắc nhiều lần)
+
+1. **Luôn xin file gốc hiện tại trước khi sửa.** Không sửa dựa trên trí nhớ hay bản cũ. Đã từng xảy ra: gửi bản sửa dựa trên file cũ làm mất tính năng đã có (`home.css` từng mất toàn bộ phần theme, phát hiện và sửa lại ở v7).
+2. **Sửa file có sẵn thì gửi toàn bộ nội dung file sau khi sửa** để dán đè, kể cả file dài. Không gửi kiểu "tìm đoạn này rồi thay bằng đoạn kia".
+3. **Mỗi file ghi rõ ngay đầu:** `[FILE MỚI]` hoặc `[DÁN ĐÈ FILE CŨ]`, kèm đường dẫn đầy đủ bắt đầu bằng `backend/` hoặc `frontend/` (hai project có thư mục `services` và `components` trùng tên, người dùng đã nhiều lần tạo nhầm chỗ). Gửi từng file một, mỗi file có một dòng giới thiệu gọn: thuộc Backend hay Frontend, mới hay dán đè, thay đổi gì.
+4. **Code gửi trực tiếp trong khung chat để người dùng tự copy.** Không tạo file đính kèm để tải về (người dùng đã phàn nàn). Ngoại lệ duy nhất: tài liệu như file bàn giao này khi người dùng chủ động xin.
+5. **Mọi đoạn code đều có comment tiếng Việt giải thích**, không ngoại lệ. Đoạn mới hoặc sửa ghi rõ "MỚI THÊM" hoặc "MỚI SỬA" kèm lý do. **Không** viết khối "mục lục" comment ở đầu file.
+6. **Tính năng lớn hoặc mới lạ thì hỏi 1–2 câu thiết kế trước khi code** (ai được làm gì, dữ liệu lưu thế nào, phạm vi). Nếu có 2 hướng rõ rệt thì dùng công cụ hỏi bằng nút bấm. Khi người dùng hỏi "bạn nghĩ sao" thì tự quyết định kèm lý do ngắn.
+7. **Hướng dẫn từng bước, chậm, ngắn gọn, ít thuật ngữ.** Sau mỗi bước lớn tổng kết bằng danh sách việc và đưa **các bước test cụ thể** (người dùng hay hỏi "test như nào").
+8. **Không giả định kết quả test.** Chỉ ghi "đã xong" khi người dùng xác nhận. Nếu họ nói "đã test xong" mà không nêu kết quả thì hỏi lại. Khi họ gửi file để kiểm tra thì đọc nội dung thật chứ không tin lời mô tả.
+9. **Đọc kỹ dòng lỗi trong ảnh hoặc log trước khi đoán nguyên nhân.** Khi người dùng báo "code không chạy" dù đã dán đúng, xin log terminal của Backend trước (từng gặp ký tự thừa `};s` làm Backend dừng im lặng, khiến mọi tính năng bị tưởng nhầm là chưa code).
+10. **CSS mới hoặc sửa phải dùng `var(--color-*, màu dự phòng)`** thay vì mã màu cứng, vì có 4 theme (màu cứng làm chữ chìm hoặc đường kẻ chói khi đổi sang theme tối).
+11. **Mọi chỗ kiểm tra quyền "thuộc nhóm" phải tính cả Giảng viên**, vì Giảng viên không nằm trong `GroupMember` (xem `getRoleInGroup` trong `comment.service.js` và `assertCanChat` trong `message.service.js` làm mẫu).
+12. **Giao diện 100% tiếng Việt.** Không tự đổi tech stack đã chốt. Người dùng hay đổi ý giữa chừng về giao diện, hãy sửa nhanh.
+13. **Dùng hộp thoại tự làm thay cho hộp mặc định của trình duyệt** (`window.confirm`, `alert`): người dùng thích hộp đổi màu theo theme. Dùng `ConfirmDialog.jsx` (mục 9.12). Hiện `NotificationBell.jsx` và vài nơi khác vẫn còn `alert`.
+14. **File trên máy người dùng có thể dùng kiểu xuống dòng CRLF** (ví dụ `task.service.js`, `group.service.js`). Khi sửa bằng script phải giữ nguyên kiểu xuống dòng.
+15. **Khi một tính năng được gửi qua nhiều lượt, cuối cùng lập bảng đủ các file cần có** (file nào tạo mới, file nào dán đè, bản nào mới nhất nếu một file được gửi 2 lần). Đã xảy ra: người dùng chỉ dán các file gửi sau `routes/index.js` nên thiếu 4 file Backend.
+16. **Không đoán vị trí file.** Ví dụ không có `backend/src/app.js`. Cần tìm thì bảo người dùng chạy trong thư mục `backend` (PowerShell) rồi xin nguyên file đó:
+    `Select-String -Path (Get-ChildItem -Recurse -Filter *.js -File | Where-Object { $_.FullName -notmatch 'node_modules' }) -Pattern "message.routes"`
+17. Khi người dùng nói "phần đó phiên khác đã làm rồi" thì ghi nhận, nhưng vẫn xin file mới nhất trước khi đụng tới.
+18. Khi người dùng gửi lại một bản bàn giao cũ hơn bản đã có, so sánh theo dòng và lấy bản mới nhất làm gốc, không trộn từng dòng cũ.
+
+---
+
+## 3. Công nghệ và môi trường
+
+- **Backend:** Node.js và Express, kiến trúc phân lớp **Route → Middleware → Controller → Service → Repository → Cơ sở dữ liệu**. Prisma **v7** (bắt buộc dùng adapter `@prisma/adapter-pg`, generator `prisma-client-js`, cấu hình ở `prisma7.config.ts`, khối `datasource` trong `schema.prisma` không có `url`). PostgreSQL 18 (cơ sở dữ liệu `quanly_dban`), JWT với `bcryptjs`, Joi, `multer`, `exceljs`, Socket.io.
+- **Frontend:** React và Vite (JavaScript thuần), React Router, Axios (`services/api.js` gắn token bằng interceptor), `@dnd-kit/core` (PointerSensor với `activationConstraint: { distance: 8 }`), `recharts`, `socket.io-client`, CSS thuần kèm CSS Variables cho hệ thống theme.
+- **Máy:** Windows, VS Code, PowerShell, Node 22. Test API bằng Postman (Thunder Client bản miễn phí không upload được file).
+- **Deploy (chưa làm):** dự kiến Render (Backend), Vercel (Frontend), Supabase hoặc Neon (cơ sở dữ liệu). Không dùng Render Postgres vì gói miễn phí chỉ 30 ngày.
+
+---
+
+## 4. Quy ước viết Backend (khuôn bắt buộc cho tính năng mới)
+
+1. **Model** trong `prisma/schema.prisma`, rồi chạy `npx prisma migrate dev --name <tên>`, rồi **`npx prisma generate`**. Với Prisma 7, `migrate dev` **không** tự chạy `generate` (nếu log không có dòng "Generated Prisma Client" thì phải chạy tay, quên bước này sẽ gây lỗi `Cannot read properties of undefined`). Trên Windows nên tắt Backend trước khi migrate hoặc generate.
+2. **Repository:** chỉ chứa câu truy vấn Prisma.
+3. **Service:** toàn bộ logic nghiệp vụ, báo lỗi bằng `throw new AppError(message, status)`.
+4. **Validator:** dùng Joi, đặt tên `xxxSchema`, dùng qua `validate(schema)`.
+5. **Controller:** chỉ gọi Service, trả về `{ success, data }` hoặc `{ success, message }`.
+6. **Route:** gắn `authMiddleware` (trừ route xem ảnh hoặc file công khai, vì thẻ `<img>` không gửi được header) và nối vào `routes/index.js`.
+
+Lưu ý:
+- Route tĩnh (ví dụ `/my-groups`) phải khai báo **trước** route động (ví dụ `/:groupId`).
+- Thêm route mới thì tắt hẳn terminal rồi chạy lại `npm run dev` (nodemon đôi khi không nhận route mới). Trước khi kết luận lỗi lạ, luôn xem terminal Backend có dòng đỏ hoặc `app crashed` không.
+- Không có `backend/src/app.js`: Express khởi tạo ở `backend/server.js`, các route gắn ở `backend/src/routes/index.js`, hiện gồm `/tasks`, `/auth`, `/groups`, `/messages`, `/milestones`, `/notifications`, `/comments`, `/attachments`, `/users`, `/supervisors`, `/conversations`, `/friends`.
+
+---
+
+## 5. Cấu trúc thư mục
+
+```
+DoAn3/
+├── backend/
+│   ├── prisma/schema.prisma
+│   ├── uploads/            (attachments/, chat/, avatars/ — phải tồn tại sẵn cho multer)
+│   ├── server.js
+│   ├── .env                (DATABASE_URL, JWT_SECRET — từng bị mất nội dung do dán đè, luôn kiểm tra)
+│   └── src/
+│       ├── config/prisma.js     (PrismaClient có adapter PrismaPg)
+│       ├── controllers/ services/ repositories/ validators/
+│       │     (auth, task, group, milestone, message, notification, comment,
+│       │      attachment, supervisor, tag, user, conversation, friendship)
+│       ├── routes/              (mỗi module một file, index.js gom lại)
+│       ├── middlewares/         (auth, validate, error)
+│       ├── sockets/             (chatHandler.js, socketInstance.js)
+│       └── utils/               (AppError.js, decodeFileName.js)
+└── frontend/src/
+    ├── pages/       Login, Register, Home, GroupDetail, ProfilePage, SupervisorDashboard
+    ├── components/  Modal, AuthLayout, CreateGroupModal, JoinGroupModal, TaskCard, KanbanColumn,
+    │                KanbanZone, CreateTaskModal, ImportTaskModal, TaskDetailModal, TaskFilterBar,
+    │                TagPicker, MembersModal, AvatarStack, StatsModal, TimelineView, AddMilestoneModal,
+    │                MilestoneComments, NotificationBell, ImageLightbox,
+    │                ChatBox, ChatThread, ChatList, ConfirmDialog
+    ├── context/     AuthContext.jsx (có updateUser), ThemeContext.jsx
+    ├── services/    api, auth, group, task, milestone, message, notification, comment,
+    │                attachment, user, tag, supervisor, socket, conversation, friend
+    ├── styles/      theme, home, kanban, members, tag, timeline, comment, milestone-comment, stats,
+    │                notification, chat, chat-rooms, chat-friends, confirm-dialog, profile
+    │                (chưa theme hoá: auth cho Login và Register)
+    ├── App.jsx      (React Router, PrivateRoute: /login /register /home /supervisor /groups/:groupId /profile)
+    └── main.jsx     (ThemeProvider bọc AuthProvider bọc App)
+```
+
+---
+
+## 6. Mô hình dữ liệu chính (schema.prisma)
+
+- **User:** `role` (`SINH_VIEN` hoặc `GIANG_VIEN`), `avatar` (đường dẫn file trên ổ đĩa), mật khẩu đã băm. Có hai quan hệ kết bạn `sentFriendRequests` và `receivedFriendRequests`. Trường quan hệ thông báo đang tên `otifications` (thiếu chữ "n") — **không sửa** vì code có thể đang dùng.
+- **Group:** `inviteCode` (uuid), quan hệ tới members, supervisors, tasks, milestones, messages, tags, conversations.
+- **GroupMember:** `role` (`"leader"` hoặc `"member"`), `status` (`PENDING`, `ACCEPTED`, `DECLINED`), duy nhất theo cặp `[userId, groupId]`. Vào bằng mã mời thì `ACCEPTED` ngay; được mời bằng email thì `PENDING`.
+- **GroupSupervisor:** `status` như trên, duy nhất theo cặp `[userId, groupId]`. Tách riêng vì Giảng viên không thao tác Task và Kanban; một Giảng viên phụ trách được nhiều nhóm.
+- **Task:** `status` (`todo`, `doing`, `done`), `priority` (`low`, `medium`, `high`), `deadline`, `milestoneId?`, `assignedTo?`, `createdBy?`, nhiều-nhiều với `tags`, và `parentTaskId?` (Subtask, chỉ sâu 1 cấp, `onDelete: Cascade`).
+- **Milestone:** cây tự tham chiếu qua `parentId?`, `order` tính riêng theo từng cấp anh em.
+- **Tag:** cặp `groupId` và `name` duy nhất, nhiều-nhiều với Task.
+- **Notification:** `type`, `content`, `groupId?`, `referenceId?` (trỏ tới bản ghi đang chờ phản hồi), `isRead`. Các `type`: `task_assigned`, `promoted_leader`, `removed_from_group`, `deadline_reminder`, `group_invite`, `supervisor_invited`, `friend_request` (có nút Đồng ý và Từ chối trong chuông, `referenceId` là id của `Friendship`), `friend_accepted` (chỉ là tin báo). Thông báo "có bình luận mới" và "Giảng viên vừa nhận xét mốc" đang dùng tạm `task_assigned`.
+- **Comment:** `taskId?` hoặc `milestoneId?`, `authorId`, `content`. Dùng cho cả bình luận task lẫn nhận xét mốc. Xóa mốc thì xóa luôn nhận xét của mốc.
+- **Message:** `content?` (có thể rỗng), `fileName?`, `filePath?`, `fileSize?`, `groupId?` (có giá trị với tin của chat cả nhóm), `conversationId?` (có giá trị với tin trong phòng chat, khi đó `groupId` là null).
+- **Attachment:** file đính kèm của Task.
+- **Conversation:** `type` (`GROUP_CHAT` hoặc `PRIVATE`), `name?` (tên nhóm chat con), `groupId?` (nhóm đồ án của nhóm chat con; chat riêng luôn null; `onDelete: Cascade`), `privateKey?` (duy nhất, chỉ dùng cho chat riêng), `createdBy`.
+- **ConversationMember:** `conversationId`, `userId`, `joinedAt`, duy nhất theo cặp, xóa theo phòng.
+- **Friendship:** `requesterId`, `addresseeId`, `status` (`PENDING` hoặc `ACCEPTED`), `pairKey` (duy nhất). Từ chối, hủy lời mời và hủy kết bạn đều **xóa bản ghi** (không có trạng thái `DECLINED`).
+- **Kỹ thuật "khóa cặp":** `privateKey` và `pairKey` là id hai người sắp xếp theo thứ tự rồi nối bằng `_`, cột duy nhất. Nhờ vậy mỗi cặp người chỉ có đúng một bản ghi dù ai khởi tạo trước. Bắt lỗi Prisma `P2002` cho trường hợp hai yêu cầu đến cùng lúc.
+
+---
+
+## 7. API chính
+
+**Xác thực:** `POST /auth/register` (email, password, fullName, role), `POST /auth/login`.
+
+**Nhóm (`/groups`):** `POST /`, `GET /my-groups`, `POST /join`, `GET /:groupId/{members|detail|workload-warnings|supervisors|tags}`, `POST /:groupId/transfer-leadership`, `DELETE /:groupId/members/:targetUserId`, `POST /:groupId/invite` (mời bằng một email, tự nhận diện Sinh viên hay Giảng viên), `DELETE /:groupId` (Body `{ confirmName }`, xóa toàn bộ nhóm, chỉ Trưởng nhóm). `GET /:groupId/detail` cho phép cả Giảng viên đã đồng ý xem và không trả `inviteCode` cho Giảng viên.
+
+**Công việc (`/tasks`):** `POST /` (nhận `tagNames[]`), `GET /group/:groupId` (chỉ trả task cấp cao kèm `subtasks[]` lồng bên trong), `GET /group/:groupId/stats` (đếm cả Subtask), `PATCH /:id/{status|assign|description|tags}`, `PUT /:id`, `DELETE /:id`, `POST /:id/remind`, `GET /template`, `POST /import`, `POST /:taskId/subtasks`. Sửa và xóa: chỉ Trưởng nhóm hoặc người tạo task. Các thao tác ghi bắt buộc người gọi thuộc nhóm (`ensureTaskGroupMember` trong `task.service.js`, bắt buộc có `actorId`).
+
+**Bình luận (`/comments`):**
+- `GET /tasks/:taskId` và `POST /tasks/:taskId`: thành viên, Trưởng nhóm, Giảng viên đã đồng ý đều xem và viết được. Mỗi bình luận kèm `authorRole` (`supervisor`, `leader`, `member`) và `isMine`.
+- `GET /milestones/:milestoneId` trả `{ comments, canWrite }`; `POST /milestones/:milestoneId` chỉ Giảng viên và Trưởng nhóm (Giảng viên viết thì báo cả nhóm bằng chuông).
+- `DELETE /:commentId`: chỉ tác giả.
+
+**Mốc (`/milestones`):** `POST /` (nhận `parentId`), `GET /group/:groupId` (trả cây, phần trăm tính đệ quy gộp cả mốc con, mỗi nút kèm `tasks: [{id, title, status}]`), `DELETE /:id` (chặn nếu còn mốc con; xóa luôn nhận xét của mốc bằng `$transaction`).
+
+**Thông báo (`/notifications`):** `GET /`, `GET /unread-count`, `PATCH /mark-all-read`, `PATCH /:id/respond` (Body `{ action: "accept" | "decline" }`, chỉ dùng cho lời mời vào nhóm và lời mời Giảng viên; lời mời kết bạn **không** đi qua API này).
+
+**Giảng viên:** `GET /supervisors/my-groups`.
+
+**Người dùng (`/users`):** `GET /me`, `PATCH /me` (đổi tên), `POST /me/avatar` (multipart, field `avatar`), `PATCH /me/password`, `GET /:userId/avatar` (công khai, dùng cho thẻ `<img>`).
+
+**Chat cả nhóm (`/messages`):** `GET /group/:groupId`, `POST /group/:groupId/upload` (multipart, field `file` và `content` không bắt buộc), `GET /:messageId/file/view` (công khai), `GET /:messageId/file/download` (cần token). Xem và tải file của tin trong phòng chat cũng dùng lại hai route này.
+
+**Phòng chat (`/conversations`, cần token):**
+- `GET /group/:groupId/people`: những người có thể nhắn riêng hoặc thêm vào nhóm chat con (thành viên `ACCEPTED` và Giảng viên `ACCEPTED`, trừ chính mình).
+- `GET /group/:groupId`: các nhóm chat con mà mình là thành viên.
+- `POST /group/:groupId` (Body `{ name, memberIds[] }`): tạo nhóm chat con. Ai được chat trong nhóm cũng tạo được; tên bắt buộc và tối đa 50 ký tự; chọn ít nhất 1 người khác; mọi người được chọn phải thuộc nhóm đó; người tạo tự được thêm.
+- `POST /private` (Body `{ userId, groupId? }`): mở hoặc tạo chat riêng. Nếu hai người đã là bạn bè thì không cần `groupId`; nếu chưa là bạn thì bắt buộc có `groupId` và cả hai phải cùng thuộc nhóm đó.
+- `GET /:conversationId/messages`, `POST /:conversationId/messages` (Body `{ content }`), `POST /:conversationId/messages/upload`: chỉ thành viên của phòng được dùng.
+
+**Kết bạn (`/friends`, cần token):**
+- `GET /` trả `{ friends: [{ friendshipId, user }], incoming: [{ id, user }], outgoing: [{ id, user }] }`.
+- `POST /request` (Body `{ email }` hoặc `{ userId, groupId }`) trả `{ autoAccepted }` (true nếu người kia đã mời mình từ trước, hai bên thành bạn bè luôn).
+- `POST /:friendshipId/accept`: chỉ người nhận lời mời.
+- `DELETE /:friendshipId`: từ chối (người nhận), hủy lời mời (người gửi), hoặc hủy kết bạn (một trong hai người).
+
+---
+
+## 8. Realtime (Socket.io)
+
+- Mỗi người vào phòng riêng `notification_<userId>` bằng `socket.emit('join_notifications', userId)` (làm trong `NotificationBell.jsx` và `ChatBox.jsx`). Mọi sự kiện realtime riêng cho một người đều phát vào phòng này:
+  - `new_notification`: thông báo mới.
+  - `new_conversation_message`: tin mới trong phòng chat; gói tin là Message kèm `sender` và `conversation: { id, type, name }`, phát cho mọi thành viên của phòng kể cả người gửi.
+  - `friend_updated`: dữ liệu kết bạn vừa đổi; phát cho cả hai người liên quan; chuông, `ChatList` và badge của `GroupDetail` đều tải lại khi nhận.
+- Chat cả nhóm vẫn dùng phòng theo `groupId` (`join_group`, sự kiện `new_message`, `message_error`). Tin chữ của chat cả nhóm gửi qua socket và `senderId` do Frontend gửi lên (chưa xác thực JWT). Tin trong phòng chat gửi qua REST nên lấy `senderId` từ token.
+- Thêm sự kiện realtime mới thì phát vào phòng `notification_<userId>`, không tạo phòng mới.
+
+---
+
+## 9. Tính năng đã hoàn thành (người dùng đã test và xác nhận đúng)
+
+**1. Nền tảng:** đăng ký và đăng nhập (chọn vai trò Sinh viên hoặc Giảng viên), tạo nhóm và tham gia bằng mã mời, Task với Kanban kéo-thả, Import và Export Excel, thống kê tiến độ, chat cả nhóm realtime, thông báo realtime (chuông và badge), bình luận và file đính kèm (xem ảnh bằng lightbox), lọc và tìm kiếm task, cảnh báo mất cân bằng khối lượng, chuyển quyền Trưởng nhóm, xóa thành viên, nút nhắc nhở deadline.
+
+**2. Giảng viên và mời thành viên:** trang riêng `/supervisor` (đăng nhập tự chuyển hướng), cơ chế "mời và chờ đồng ý" cho cả Sinh viên lẫn Giảng viên (một ô nhập email, nút Đồng ý và Từ chối trong chuông, nhãn "Đang chờ"), nhận xét theo mốc (chỉ Giảng viên và Trưởng nhóm viết, hiện nhãn vai trò), Giảng viên bình luận trên task, nút quay lại của Giảng viên về `/supervisor`, vào được trang cá nhân `/profile`, mở được modal Thành viên nhóm, chế độ chỉ xem task (ẩn các nút chỉnh sửa khi `isMember = false`).
+
+**3. Task nâng cao:** nhãn (ngân hàng nhãn riêng mỗi nhóm, `TagPicker`), Sửa và Xóa task (Trưởng nhóm hoặc người tạo), Subtask (chỉ 1 cấp; số liệu thống nhất ở Kanban, Timeline, Thống kê và cảnh báo khối lượng, đều đếm cả việc con).
+
+**4. Mốc và Kanban:** mốc dạng cây (phần trăm đệ quy, Timeline liệt kê tên từng task), Kanban chia thành board riêng cho từng mốc kể cả mốc con (`buildZoneTree` và `renderZoneNode` trong `GroupDetail.jsx`, mỗi `KanbanZone` có `DndContext` riêng, thêm vùng "Không thuộc mốc nào"), phân quyền xem (Trưởng nhóm xem hết, Thành viên có hai tab "Việc cả nhóm" và "Việc của tôi").
+
+**5. Nhóm và cá nhân:** xóa nhóm (gõ đúng tên để xác nhận, xóa cascade và dọn file đính kèm), trang cá nhân `/profile` (đổi tên, avatar, mật khẩu), modal Thành viên nới rộng (`modal-wide`) và không còn vỡ khi zoom to.
+
+**6. Chat và file:** gửi ảnh và file trong chat, sửa lỗi vỡ dấu tên file tiếng Việt (`utils/decodeFileName.js`, chỉ áp dụng cho file upload sau khi sửa), badge tin chưa đọc của chat cả nhóm trên nút "Trò chuyện".
+
+**7. Giao diện:** bốn theme (Sáng, Tối, Kem ấm, Xanh dịu) bằng CSS Variables, lưu riêng từng trình duyệt bằng `localStorage`, chọn ở `/profile`. Đã theme hoá và xác nhận: `home.css`, `kanban.css`, `tag.css`, `members.css`, `chat.css`, `profile.css`, `timeline.css`, `theme.css`, `stats.css`, `comment.css`, `milestone-comment.css`. `modal-box` có `max-height: 85vh` và tự cuộn.
+
+**8. Import Excel:** cột mốc dạng "Mốc cha > Mốc con", cột thứ 8 "Thuộc công việc cha" (tạo Subtask). Thứ tự 8 cột: Tên công việc, Mô tả, Email người phụ trách, Độ ưu tiên, Deadline, Tên mốc, Nhãn, Thuộc công việc cha. Template tải về có 2 dòng ví dụ.
+
+**9. Thống kê:** màu "Chưa làm" là `#94A3B8` (hằng `STATUS_COLORS` đầu `StatsModal.jsx`), tooltip biểu đồ dùng biến theme.
+
+**10. Bảo mật Backend (v14):** Backend chặn thao tác ghi cho người không thuộc nhóm (`ensureTaskGroupMember` trong `task.service.js`, áp dụng cho `updateTaskStatus`, `updateDescription`, `updateTaskTags`, `assignTask`; `assignTask` lấy `groupId` từ bản ghi task chứ không tin dữ liệu do Frontend gửi). Người dùng báo mọi chức năng vẫn bình thường.
+
+**11. Chat nâng cao (v15):**
+- **Sửa lỗi Giảng viên chat:** `message.service.js` có hàm `assertCanChat(userId, groupId)`, cho phép thành viên (`findMembership`) hoặc Giảng viên `ACCEPTED` (`findSupervisorship`); hàm được export để `conversation.service.js` và `friendship.service.js` dùng lại. `chatHandler.js` không đổi.
+- **Nhóm chat con và chat riêng trong cùng nhóm đồ án** (người dùng test 8 bước, đúng): chat riêng cho Sinh viên với Giảng viên và Sinh viên với Sinh viên trong cùng nhóm; nhóm chat con ai cũng tạo được. Frontend: `ChatThread.jsx` (khung tin nhắn dùng chung hai chế độ `mode="group"` và `mode="conversation"`, tự bỏ tin trùng theo `id`), `ChatList.jsx` (màn hình danh sách), `ChatBox.jsx` (khung ngoài với ba màn hình `list`, `group`, `conversation`; mặc định mở chat cả nhóm; nút ‹ về danh sách; đếm tin chưa đọc theo phòng chat), `chat-rooms.css`.
+- **Kết bạn, phần Backend** (người dùng báo chạy ổn): thiết kế đã chốt là kết bạn bằng cả hai cách (nhập email, hoặc bấm "+ Kết bạn" trong danh sách thành viên nhóm), người kia phải đồng ý, Sinh viên và Giảng viên đều kết bạn được. Bạn bè chat riêng được dù khác nhóm. Mời chéo thì tự thành bạn bè.
+
+**12. `ConfirmDialog` (hộp xác nhận tự làm):** `components/ConfirmDialog.jsx` và `styles/confirm-dialog.css`, props `isOpen`, `title`, `message`, `confirmText`, `cancelText`, `danger`, `onConfirm`, `onCancel`. Đóng bằng phím Esc hoặc bấm vùng tối; nút "Giữ lại" có `autoFocus` để bấm Enter không làm việc nguy hiểm; nút đỏ dùng `var(--color-danger, #D14343)`. Dùng trong `ChatList.jsx` khi hủy kết bạn. Hộp phải được vẽ **bên trong** cây của `ChatBox` (không dùng portal ra `<body>`), nếu không cú bấm vào hộp bị coi là bấm ra ngoài khung chat và khung chat tự đóng. *(Mới gửi, chưa xác nhận test: xem mục 10.)*
+
+---
+
+## 10. Đã làm nhưng chưa xác nhận kết quả test
+
+Người dùng chưa báo kết quả cho các mục sau. Chỉ ghi "đã xong" khi họ xác nhận. **Việc đầu tiên của phiên mới: hỏi kết quả các mục này.**
+
+1. **Bấm ra ngoài khung chat thì đóng** (`ChatBox.jsx`, nghe sự kiện `mousedown`, bỏ qua nút `.chat-toggle-btn`): người dùng chỉ báo "đã test xong", chưa nêu kết quả từng bước.
+2. **Badge nút 💬 cho tin trong phòng chat và lời mời kết bạn** (`GroupDetail.jsx`, `totalChatBadge = unreadChat + pendingFriendCount`): chưa nhận kết quả. Phần lời mời kết bạn không mất khi mở khung chat, chỉ mất khi Đồng ý hoặc Từ chối.
+3. **Kết bạn, phần Frontend** (`ChatList.jsx`, `friendApi.js`, `chat-friends.css`): đã gửi 10 bước test. Chỉ có một ảnh chụp cho thấy mục "Bạn bè" hiển thị một người bạn và nút ✕ hoạt động đến bước hiện hộp xác nhận.
+4. **Thông báo kết bạn và đồng bộ chuông với khung chat** (9 bước test): chưa nhận kết quả. Cách làm: toàn bộ logic ở `friendship.service.js` (tạo thông báo bằng `notificationService.notify` bọc trong `notifySafely`; xóa thông báo lời mời bằng `removeByReference('friend_request', friendshipId)` dùng `deleteMany`; phát `friend_updated` cho cả hai người). Controller không tự phát nữa. `NotificationBell.jsx` có icon 🤝 và ✅, `INVITE_TYPES` có `friend_request`, nút Đồng ý và Từ chối của lời mời kết bạn gọi thẳng `friendApi`, và tải lại khi nhận `friend_updated`.
+5. **`ConfirmDialog`** (5 bước test): chưa nhận kết quả; ảnh chụp người dùng gửi là hộp mặc định cũ của trình duyệt (chụp trước khi dùng hộp mới). Chưa xem thử cả 4 theme; chưa kiểm tra `--color-danger` có trong `theme.css` không.
+6. **Xóa nhóm đồ án khi nhóm đã có nhóm chat con:** schema đặt `onDelete: Cascade` nên nhóm chat con bị xóa theo, nhưng chưa test lại.
+7. *(Tùy chọn)* Gọi thẳng API bằng token của Giảng viên (Postman) để xác nhận các thao tác ghi trả về 403.
+
+---
+
+## 11. Việc còn lại
+
+**Nên làm:**
+1. **Quyền đọc theo nhóm ở Backend:** `getTasksByGroup`, `getGroupStats` và nhiều khả năng cả các API đọc khác (timeline, comment) chưa kiểm tra người gọi là thành viên hoặc Giảng viên `ACCEPTED`, nên người ngoài biết `groupId` vẫn đọc được.
+2. **Chặn chat riêng khi không còn quan hệ:** sau khi hủy kết bạn hoặc không còn chung nhóm, phòng chat riêng cũ vẫn nhắn qua lại được (`assertConversationMember` chỉ kiểm tra là thành viên phòng). Người dùng chưa quyết định quy tắc.
+3. **Quyền chat cả nhóm và socket:** `GET /messages/group/:groupId` không kiểm tra thành viên; `GET /messages/:messageId/file/download` cần token nhưng không kiểm tra thành viên (`/file/view` công khai theo thiết kế); socket tin `groupId`, `userId`, `senderId` do Frontend gửi lên.
+4. **Quét CSS còn màu cứng** (nhiều khả năng ở `auth.css`, `notification.css`): trong VS Code bấm `Ctrl+Shift+F`, bật regex, tìm `#[0-9A-Fa-f]{6}` trong `frontend/src/styles` (bỏ qua `theme.css`), rồi theme hoá nốt Login và Register.
+5. **Kiểm thử toàn diện, tối ưu và deploy.** Rủi ro cần xử lý (suy luận, chưa thấy cấu hình deploy thật): ổ đĩa hosting miễn phí thường bị xóa khi khởi động lại nên thư mục `uploads/` có thể mất; biến môi trường `DATABASE_URL`, khóa JWT, địa chỉ Frontend cho CORS; `frontend/src/services/socket.js` đang viết cứng `io('http://localhost:5000')` và `services/api.js` cũng cần kiểm tra `baseURL`; chạy migrate Prisma cho cơ sở dữ liệu mới; chuẩn bị một nhóm dữ liệu demo (mốc, task, việc con, nhận xét) để thuyết trình.
+6. **Viết báo cáo và làm slide thuyết trình.**
+
+**Tùy chọn:**
+- Làm số "0/5" trên Kanban dễ hiểu hơn (thêm chữ "việc" và tooltip "Gồm 1 việc chính + 4 việc con" trong `KanbanZone.jsx`).
+- Script sửa hàng loạt tên file cũ đã bị vỡ dấu trong cơ sở dữ liệu (`Message.fileName`, `Attachment.fileName`).
+- Thêm `type` thông báo riêng cho bình luận và nhận xét mốc thay vì dùng tạm `task_assigned` (hiện đã hiển thị đúng ở chuông).
+- Sidebar điều hướng cố định; khu vực Admin.
+- Trang "Tin nhắn" riêng ngoài trang nhóm (hiện khung chat nằm trong `GroupDetail.jsx`, nên chat với bạn khác nhóm chỉ mở được khi đang ở một trang nhóm).
+- Nhóm chat con: thêm hoặc xóa thành viên sau khi tạo, rời nhóm, đổi tên, xóa nhóm chat.
+- Lưu số tin chưa đọc của phòng chat qua lần tải lại trang (hiện chỉ lưu trong bộ nhớ trình duyệt); badge nút 💬 còn đếm cả tin chat riêng từ người không thuộc nhóm đang xem.
+- Thay `alert(...)` trong `NotificationBell.jsx` và nơi khác bằng hộp hoặc thông báo tự làm.
+
+---
+
+## 12. File đã xem, chưa xem và rủi ro ghi đè
+
+**File đã xem code thật (theo phiên):**
+- v8: `task.service.js`, `task.repository.js`, `milestone.repository.js`, `group.service.js`, `group.repository.js`, `GroupDetail.jsx`, `KanbanZone.jsx`, `StatsModal.jsx`, `stats.css`, `theme.css`, `home.css`, `message.service.js`, `message.controller.js`, `message.routes.js`, `attachment.service.js`, `attachment.controller.js`, `utils/decodeFileName.js`.
+- v9: `comment.repository.js`, `comment.service.js`, `comment.controller.js`, `comment.routes.js`, `commentApi.js`, `notification.service.js`, `supervisor.service.js`, `supervisor.repository.js`, `TimelineView.jsx`, `timeline.css`, `TaskDetailModal.jsx`, `comment.css`, `Home.jsx`.
+- v12: `MembersModal.jsx`, `group.controller.js`, `group.routes.js`, `SupervisorDashboard.jsx`, `ProfilePage.jsx`, `App.jsx`.
+- v14: `task.controller.js`, `task.service.js`, `home.css`, `members.css`, `Modal.jsx`.
+- v15: `schema.prisma`, `chatHandler.js`, `message.repository.js`, `ChatBox.jsx` (bản cũ), `socket.js`, `chat.css`, `messageApi.js`, `routes/index.js`, `notification.repository.js`, `NotificationBell.jsx`.
+
+**File chưa xem (chỉ dựa vào chữ ký hàm hoặc báo cáo của người dùng):** `group.repository.js` bản mới nhất (chỉ biết chữ ký `findMembership(userId, groupId)` và `findSupervisorship(userId, groupId)`), `socketInstance.js` (chỉ dùng `getIO()`), `server.js`, `notificationApi.js`, `auth.middleware.js`, `api.js`, `AuthContext.jsx` (cần có `role` trong `user`), `ThemeContext.jsx`, `notification.css`, `kanban.css` (nơi định nghĩa `.chat-toggle-btn` và `.chat-unread-badge`), `attachmentApi.js`, `attachment.routes.js`, `ImportTaskModal.jsx`, `CreateTaskModal.jsx`, `AddMilestoneModal.jsx`, `TagPicker.jsx`, `KanbanColumn.jsx`, `supervisor.controller.js`, `Login.jsx`, `Register.jsx` và CSS tương ứng, file CSS định nghĩa `.modal-wide`. Chưa phát hiện nơi nào ngoài `task.controller.js` gọi `updateTaskStatus`, `updateDescription`, `updateTaskTags`, `assignTask`; nếu có nơi khác gọi mà không truyền `actorId` sẽ nhận lỗi 401 "Thiếu thông tin người dùng".
+
+**Rủi ro ghi đè do làm song song (quan trọng):**
+- Bản bàn giao v14 và cũ hơn **không có** phần chat phòng và kết bạn. Nếu một phiên dùng v14 rồi gửi bản sửa dán đè các file sau từ bản cũ thì phần chat và kết bạn sẽ mất hoặc Backend không khởi động: `routes/index.js` (thiếu `/conversations`, `/friends`, Frontend báo 404), `schema.prisma` (thiếu model `Conversation`, `ConversationMember`, `Friendship` và `Message.conversationId`, Prisma báo lỗi), `message.service.js` (mất `assertCanChat`, Giảng viên lại không chat được và `conversation.service.js` lỗi), `GroupDetail.jsx`, `ChatBox.jsx`, `NotificationBell.jsx`, `notification.service.js`, `notification.repository.js`.
+- Phiên v15 đã gửi bản hoàn chỉnh để dán đè cho: `schema.prisma`, `routes/index.js`, `message.service.js`, `notification.service.js`, `notification.repository.js`, `GroupDetail.jsx`, `ChatBox.jsx`, `ChatList.jsx`, `NotificationBell.jsx`, `conversation.service.js`, `friendship.service.js`, `friendship.controller.js`.
+- Khi đụng tới `group.service.js`, `group.repository.js`, `milestone.repository.js` hãy xin bản mới nhất (từng thấy các bản khác nhau giữa các phiên). `group.service.js` bản v10 có đủ cả đếm Subtask lẫn `getGroupDetail` cho Giảng viên.
+- Tài khoản Giảng viên dùng để test (`giangvien@gmail.com`) từng vừa là `GroupMember` vừa là `GroupSupervisor` ở "nhóm 1", nên vẫn thấy nút Import và Thêm việc. Muốn test đúng vai Giảng viên thuần thì Trưởng nhóm xóa họ khỏi danh sách thành viên. Để test nhận xét và bình luận cần 3 tài khoản cùng nhóm: Trưởng nhóm, Thành viên thường, Giảng viên đã đồng ý.
+
+---
+
+## 13. Bài học kỹ thuật
+
+**Môi trường và lỗi hay gặp**
+- Prisma 7: quên `npx prisma generate` sau `migrate dev` gây lỗi `Cannot read properties of undefined`.
+- `EADDRINUSE :::5000`: còn một phiên `npm run dev` cũ, chạy `taskkill /F /IM node.exe` rồi chạy lại.
+- `.env` từng bị dán đè mất `DATABASE_URL` và `JWT_SECRET`.
+- Lỗi 404 ở route mới thường do chưa khởi động lại hẳn Backend hoặc chưa nối vào `routes/index.js`.
+- Hàm dùng chung trong `utils/` phải tạo trước khi dán các file `require` nó, nếu không Backend dừng ngay khi khởi động.
+- Khi người dùng báo "trắng màn": mở F12, lấy lỗi trong Console (thường là thiếu `export`, sai đường dẫn import, hoặc file tạo nhầm thư mục).
+- Copy và dán tay dễ dính ký tự thừa cuối file (từng gặp `};s`).
+- `members.css` và `comment.css` từng bị lặp nội dung do dán nối thêm thay vì thay thế: khi nhận file CSS, kiểm tra trùng lặp trước.
+
+**Prisma và dữ liệu**
+- Ngày dạng `"2026-09-25"` phải qua `new Date(...)` trước khi lưu.
+- `where: { userId: undefined }` bị Prisma **bỏ qua** (khớp bản ghi bất kỳ): trước khi kiểm tra quyền bằng `findMembership(actorId, ...)` phải chặn `actorId` rỗng. Không tin `groupId` do Frontend gửi, lấy từ bản ghi trong cơ sở dữ liệu.
+- Hàm Repository có hai tham số cùng kiểu (`findMembership(userId, groupId)`) rất dễ đảo thứ tự khi copy, từng gây 403 sai.
+- Xóa bản ghi cha có bản ghi con tùy chọn (như `Comment.milestoneId?`) mà không xóa con sẽ để lại bản ghi mồ côi: dùng `$transaction` (đã áp dụng ở `milestone.repository.js`). Quan hệ mới nên đặt `onDelete: Cascade` đúng chỗ (`Conversation` tới `Group`, `ConversationMember` và `Message` tới `Conversation`).
+- `taskRepository.findByGroup` chỉ trả task cấp cao (kèm `subtasks[]`) và Import Excel phụ thuộc vào đó: khi cần đếm cả Subtask thì dàn phẳng bằng `flatMap` ở Service hoặc Component, không đổi Repository.
+
+**Giảng viên và quyền**
+- Giảng viên không nằm trong `GroupMember`, nên mọi hàm dùng `findMembership` đều chặn Giảng viên bằng 403 (đã gặp ở bình luận task, `getGroupDetail`, trang `/home`, chat). Kiểm tra thêm `findSupervisorship`, kiểm tra Giảng viên **trước** vì tài khoản test có thể vừa là thành viên vừa là Giảng viên.
+- Mọi liên kết dùng chung cho cả hai vai trò phải rẽ theo `user.role` (nút "Quay lại", trang chủ, `ProfilePage` dùng `supervisorApi.getMyGroups()` cho Giảng viên).
+- Quyền thật luôn do Backend quyết định; Frontend chỉ ẩn hoặc hiện nút nên điều kiện hiện nút phải khớp với điều kiện Backend.
+- Lỗi 500 `Invalid prisma.groupSupervisor.update() ... where id` khi bấm Đồng ý nghĩa là `referenceId` của thông báo bị rỗng (thường do thông báo mời cũ tạo trước khi có `referenceId`); xóa thông báo và bản ghi `PENDING` bằng `npx prisma studio` rồi mời lại.
+
+**Frontend**
+- `@dnd-kit` và `onClick` trên cùng một phần tử: bắt buộc `PointerSensor` với `distance: 8`.
+- Route ảnh hoặc file dùng `<img src>` không được gắn `authMiddleware`.
+- `{/* comment */}` đặt ngay sau `return (` và trước thẻ JSX gốc bị hiểu như JavaScript thường, gây lỗi cú pháp.
+- Khi một modal tải nhiều API độc lập, dùng `Promise.allSettled` thay `Promise.all` (một API bị 403 làm modal treo "Đang tải...").
+- Ô nhập "Enter để gửi" phải kiểm tra `e.nativeEvent.isComposing`, nếu không gõ tiếng Việt (Telex, VNI) bấm Enter để chốt chữ sẽ gửi nhầm câu đang gõ dở.
+- `multer` đọc `originalname` theo `latin1` nên tên file tiếng Việt vỡ dấu: giải mã bằng `Buffer.from(name, 'latin1').toString('utf8')` trong hàm dùng chung `utils/decodeFileName.js`, gọi ở mọi nơi lưu tên file upload.
+- `recharts` `<Tooltip>` mặc định lấy màu chữ theo màu miếng biểu đồ: ép `itemStyle` và `contentStyle` dùng biến theme. Thuộc tính SVG như `stroke` của `<Cell>` không chắc nhận `var(--...)`, dùng mã màu cố định.
+- CSS modal: `<input>` trong hàng flex cần `min-width: 0` mới co được; `width: 100%` cộng padding làm hộp tràn, hãy trừ sẵn bằng `calc()`; thử zoom trình duyệt 150%–400%. Khung `.workload-warning-box` luôn nền vàng nhạt nên chữ trong đó dùng màu cố định đậm.
+- Muốn nền nhạt của nút nguy hiểm thích ứng theme thì dùng `color-mix(in srgb, var(--color-danger) 12%, transparent)`.
+
+**Realtime và chat**
+- `ChatBox` cũ phát `leave_group` khi đóng khung, làm socket rời phòng nhóm nên badge của `GroupDetail` ngừng nhận tin. Bản mới (`ChatThread`) chỉ `join_group`, không `leave_group`.
+- Đóng khung khi bấm ra ngoài: dùng `mousedown`, bỏ qua nút mở khung. Hộp xác nhận hoặc modal nhỏ nằm trong khung **không** được dùng portal ra `<body>`.
+- Đồng bộ hai giao diện cùng một thao tác (chuông và khung chat): để Backend tạo hoặc xóa thông báo và phát `friend_updated`; hai giao diện chỉ gọi cùng API rồi tải lại khi nhận sự kiện; bọc việc gửi thông báo bằng `notifySafely` để lỗi thông báo không làm hỏng thao tác chính; xóa thông báo theo `referenceId` bằng `deleteMany` (không lỗi nếu đã bị xóa).
+
+---
+
+## 14. Cách tiếp tục
+
+1. Đọc mục 2, mục 10 và mục 12 trước (chú ý phần "Rủi ro ghi đè do làm song song").
+2. **Việc đầu tiên:** hỏi người dùng kết quả test các mục ở mục 10, và chỉ ghi "đã xong" khi họ xác nhận.
+3. Hỏi người dùng muốn làm mục nào ở mục 11. Gợi ý: các mục về quyền ở Backend (1, 2, 3), rồi quét màu cứng kèm theme hoá Login và Register, hoặc chuyển sang kiểm thử, deploy, báo cáo và slide. Người dùng có thể tự chọn mục khác.
+4. Xin đúng file gốc cần sửa, hỏi 1–2 câu thiết kế nếu là tính năng lớn.
+5. Trả code đủ theo khuôn Model, Repository, Service, Validator, Controller, Route (Backend), kèm `[FILE MỚI]` hoặc `[DÁN ĐÈ FILE CŨ]`, comment tiếng Việt, file hoàn chỉnh để dán đè, và cuối cùng luôn kèm các bước test cụ thể.
+6. Sau khi hoàn thành một tính năng lớn, nhắc người dùng cân nhắc xuất bản `v16` cập nhật file này nếu định chuyển sang phiên làm việc khác.

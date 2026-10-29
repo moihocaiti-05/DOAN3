@@ -1,0 +1,104 @@
+/* ===== MỚI THÊM (tính năng 1): hộp "Việc chờ tôi duyệt" trên trang Giảng viên =====
+   Class bắt đầu bằng "pr-" để không trùng với CSS khác. Chỉ dùng biến theme có thật. */
+
+.pr-box {
+  background: var(--color-surface, #FFFFFF);
+  border: 1px solid var(--color-border, #E5E7EB);
+  border-radius: 10px;
+  padding: 16px 18px;
+  margin-bottom: 20px;
+}
+
+.pr-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.pr-title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--color-text, #151B26);
+}
+
+/* Số việc đang chờ, nền nhạt màu chủ đạo */
+.pr-count {
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  background: var(--color-accent-soft-bg, #FFF0F1);
+  color: var(--color-text, #151B26);
+}
+
+.pr-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.pr-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 8px;
+  border-top: 1px solid var(--color-border-light, #F0F2F5);
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.pr-item:hover {
+  background: var(--color-surface-subtle, #F7F8FA);
+}
+
+.pr-item-main {
+  min-width: 0; /* cho phép chữ dài tự cắt thay vì đẩy tràn khung */
+}
+
+.pr-item-title {
+  margin: 0;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--color-text, #151B26);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pr-item-sub {
+  margin: 2px 0 0;
+  font-size: 12px;
+  color: var(--color-text-secondary, #5B6472);
+}
+
+.pr-item-go {
+  flex-shrink: 0;
+  font-size: 12.5px;
+  color: var(--color-accent, #FC636B);
+  font-weight: 500;
+}
+
+.pr-more {
+  margin-top: 8px;
+  padding: 5px 13px;
+  font-size: 13px;
+  font-family: inherit;
+  color: var(--color-text-secondary, #5B6472);
+  background: transparent;
+  border: 1px solid var(--color-border, #E5E7EB);
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.pr-more:hover {
+  border-color: var(--color-accent, #FC636B);
+}
+
+/* Không có việc nào chờ duyệt: chỉ 1 dòng nhỏ, không chiếm chỗ */
+.pr-empty {
+  margin: 0 0 20px;
+  font-size: 13px;
+  color: var(--color-text-muted, #8A93A0);
+}

@@ -1,0 +1,281 @@
+/* ===== Khung trang chủ ===== */
+.home-page {
+  min-height: 100vh;
+  background: var(--color-bg); /* nền trang lấy từ theme */
+  font-family: 'Inter', sans-serif;
+}
+
+.home-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 40px;
+  background: var(--color-surface);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.home-logo {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--color-text);
+  letter-spacing: -0.01em;
+}
+
+.home-user-info {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  font-size: 14px;
+  color: var(--color-text);
+}
+
+.home-logout-btn {
+  padding: 7px 14px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--color-text);
+  background: transparent;
+  border: 1.5px solid var(--color-border);
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.home-logout-btn:hover {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+}
+
+.home-content {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 48px 24px;
+}
+
+.home-content-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 32px;
+}
+
+.home-title {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--color-text);
+  margin: 0;
+  letter-spacing: -0.01em;
+}
+
+.home-actions {
+  display: flex;
+  gap: 10px;
+}
+
+/* ===== Nút dùng chung toàn app (Kanban, modal, chat... đều dùng 2 class này) ===== */
+.btn-primary, .btn-secondary {
+  padding: 9px 16px;
+  font-size: 13.5px;
+  font-weight: 600;
+  border-radius: 8px;
+  cursor: pointer;
+  font-family: 'Inter', sans-serif;
+}
+
+.btn-primary {
+  background: var(--color-accent);
+  color: #FFFFFF; /* chữ trắng trên nền coral, giữ cố định ở mọi theme */
+  border: 1.5px solid var(--color-accent);
+}
+
+.btn-primary:hover {
+  background: var(--color-accent-hover);
+  border-color: var(--color-accent-hover);
+}
+
+.btn-secondary {
+  background: var(--color-surface);
+  color: var(--color-text);
+  border: 1.5px solid var(--color-border);
+}
+
+.btn-secondary:hover {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+}
+
+/* ===== Lưới card nhóm ===== */
+.group-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 16px;
+}
+
+.group-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  padding: 18px;
+  cursor: pointer;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.group-card:hover {
+  border-color: var(--color-accent);
+  box-shadow: 0 2px 10px rgba(252,99,107,0.12);
+}
+
+.group-card-name {
+  font-size: 15.5px;
+  font-weight: 700;
+  color: var(--color-text);
+  margin: 0 0 6px;
+}
+
+.group-card-desc {
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  margin: 0 0 14px;
+  min-height: 20px;
+}
+
+.group-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 12.5px;
+  color: var(--color-text-muted);
+}
+
+/* ===== Huy hiệu vai trò (Trưởng nhóm / Thành viên) ===== */
+.role-badge {
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.role-badge.leader {
+  background: var(--color-accent-soft-bg);
+  color: var(--color-accent-hover);
+}
+
+.role-badge.member {
+  background: var(--color-surface-subtle-2);
+  color: var(--color-text);
+}
+
+.empty-state {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--color-text-muted);
+}
+
+/* ===== Modal dùng chung ===== */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: var(--color-overlay);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  /* MỚI THÊM: chừa lề 16px quanh modal để khi zoom to / màn hình hẹp, modal không bị dính sát hoặc tràn ra mép trình duyệt */
+  padding: 16px;
+  box-sizing: border-box;
+}
+
+.modal-box {
+  background: var(--color-surface); /* trước đây trắng cứng nên modal ở theme tối bị chói và chữ khó đọc */
+  border-radius: 12px;
+  /* MỚI SỬA: trước đây width: 100% cộng thêm padding 28px x2 và viền 1px x2 (box-sizing mặc định) nên modal LUÔN rộng hơn
+     khung chứa 58px, khi zoom to (màn hình hẹp) thì tràn ra khỏi mép trình duyệt. Trừ sẵn 58px để modal vừa khít khung chứa.
+     max-width bên dưới (và max-width của .modal-wide) vẫn giữ nguyên nên khi màn hình rộng giao diện không đổi */
+  width: calc(100% - 58px);
+  max-width: 400px;
+  padding: 28px;
+  border: 1px solid var(--color-border);
+  /* MỚI THÊM (theo ghi chú v6, chưa thấy code bản gốc nên viết lại): modal cao tối đa 85% màn hình,
+     phần thân tự cuộn thay vì tràn ra ngoài màn hình - hữu ích cho TaskDetailModal/MembersModal khi nội dung dài.
+     Nếu thấy layout modal nào bị lạ thì xóa 3 dòng bên dưới và phần .modal-body là về như cũ */
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* MỚI THÊM: khi màn hình rất hẹp (zoom từ khoảng 350% trở lên) thu nhỏ lề trong modal lại để còn chỗ cho nội dung
+   (18px x2 + viền 1px x2 = 38px nên width phải trừ 38px cho khớp) */
+@media (max-width: 560px) {
+  .modal-box {
+    padding: 18px;
+    width: calc(100% - 38px);
+  }
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  flex-shrink: 0; /* tiêu đề luôn hiện đủ, không bị co lại khi thân modal dài */
+}
+
+.modal-header h3 {
+  font-size: 17px;
+  font-weight: 700;
+  margin: 0;
+  color: var(--color-text);
+}
+
+.modal-close {
+  background: none;
+  border: none;
+  font-size: 22px;
+  cursor: pointer;
+  color: var(--color-text-muted);
+  line-height: 1;
+}
+
+.modal-body {
+  overflow-y: auto; /* nội dung dài thì cuộn bên trong modal */
+  /* MỚI THÊM: thanh cuộn mảnh và đổi màu theo theme (thanh mặc định của trình duyệt rất chói ở giao diện tối) */
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-border) transparent;
+  /* MỚI THÊM: chừa 6px bên phải để nội dung không dính sát thanh cuộn khi modal phải cuộn */
+  padding-right: 6px;
+}
+
+/* ===== Link avatar + tên trong Header, dẫn tới trang Profile ===== */
+.home-user-link {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+  color: var(--color-text-secondary);
+  font-size: 14px;
+  border-radius: 999px;
+  padding: 4px 10px 4px 4px;
+  transition: background 0.15s ease;
+}
+
+.home-user-link:hover {
+  background: var(--color-surface-subtle-2);
+}
+
+.home-user-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+/* Avatar dự phòng khi user chưa có ảnh thật - hiện 2 ký tự đầu của tên trên nền coral */
+.home-user-avatar-fallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-accent);
+  color: #FFFFFF;
+  font-size: 11px;
+  font-weight: 700;
+}

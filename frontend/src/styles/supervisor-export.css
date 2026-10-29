@@ -1,0 +1,32 @@
+/* ===== MỚI THÊM (tính năng 4): nút "Xuất Excel" trên thanh công cụ trang Giảng viên =====
+   Class bắt đầu bằng "ex-" để không trùng với CSS khác. */
+
+.ex-btn {
+  padding: 5px 13px;
+  font-size: 13px;
+  font-weight: 500;
+  font-family: inherit;
+  color: var(--color-text, #151B26);
+  background: transparent;
+  border: 1px solid var(--color-border, #E5E7EB);
+  border-radius: 999px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.ex-btn:hover:not(:disabled) {
+  border-color: var(--color-accent, #FC636B);
+  color: var(--color-accent, #FC636B);
+}
+
+.ex-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Dòng báo lỗi khi xuất thất bại, nằm ngay dưới thanh công cụ */
+.ex-error {
+  margin: -6px 0 12px;
+  font-size: 13px;
+  color: var(--color-danger, #D14343);
+}

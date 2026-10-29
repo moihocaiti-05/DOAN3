@@ -1,0 +1,132 @@
+/* Khung nhận xét dưới mỗi mốc - dùng biến màu theme (var(--color-*)) để đổi giao diện vẫn đúng màu */
+.ms-comment {
+  margin-top: 10px;
+}
+
+/* Nút "💬 Nhận xét" bấm để mở/đóng */
+.ms-comment-toggle {
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-accent);
+  cursor: pointer;
+}
+
+.ms-comment-toggle:hover {
+  text-decoration: underline;
+}
+
+/* Khung chứa danh sách nhận xét + ô nhập */
+.ms-comment-box {
+  margin-top: 8px;
+  padding: 10px 12px;
+  background: var(--color-surface-subtle);
+  border: 1px solid var(--color-border-light);
+  border-radius: 8px;
+}
+
+.ms-comment-empty {
+  font-size: 12px;
+  color: var(--color-text-muted);
+  margin: 0;
+}
+
+/* Mỗi nhận xét - các nhận xét cách nhau bằng đường kẻ mảnh */
+.ms-comment-item {
+  padding: 8px 0;
+  border-bottom: 1px solid var(--color-border-light);
+}
+
+.ms-comment-item:last-of-type {
+  border-bottom: none;
+}
+
+/* Dòng đầu: tên - nhãn vai trò - thời gian - nút Xóa */
+.ms-comment-head {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.ms-comment-author {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+/* Nhãn vai trò (dạng viên thuốc nhỏ) */
+.ms-comment-role {
+  font-size: 10.5px;
+  font-weight: 600;
+  padding: 1px 8px;
+  border-radius: 999px;
+}
+
+/* Giảng viên: màu nhấn coral để nổi bật nhất */
+.ms-comment-role-supervisor {
+  background: var(--color-accent-soft-bg);
+  color: var(--color-accent);
+  border: 1px solid var(--color-accent-soft-border);
+}
+
+/* Trưởng nhóm và Thành viên: màu trung tính */
+.ms-comment-role-leader,
+.ms-comment-role-member {
+  background: var(--color-surface-subtle-2);
+  color: var(--color-text-secondary);
+}
+
+.ms-comment-time {
+  font-size: 11px;
+  color: var(--color-text-muted);
+}
+
+/* Nút Xóa đẩy sang mép phải */
+.ms-comment-delete {
+  margin-left: auto;
+  background: none;
+  border: none;
+  font-size: 11px;
+  color: var(--color-text-muted);
+  cursor: pointer;
+}
+
+.ms-comment-delete:hover {
+  color: var(--color-danger);
+}
+
+/* Nội dung nhận xét - giữ xuống dòng người dùng gõ, tự ngắt dòng khi quá dài */
+.ms-comment-content {
+  margin: 4px 0 0;
+  font-size: 12.5px;
+  color: var(--color-text);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* Ô nhập + nút Gửi */
+.ms-comment-form {
+  display: flex;
+  gap: 8px;
+  align-items: flex-end;
+  margin-top: 10px;
+}
+
+.ms-comment-input {
+  flex: 1;
+  resize: vertical;
+  padding: 8px 10px;
+  font-size: 12.5px;
+  font-family: inherit;
+  color: var(--color-text);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+}
+
+.ms-comment-send {
+  flex-shrink: 0;
+}

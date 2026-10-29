@@ -1,0 +1,175 @@
+/* ===== Component chọn/gõ nhãn (TagPicker) ===== */
+
+.tag-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.tag-picker-selected {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.tag-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: var(--color-accent-soft-bg);
+  color: var(--color-accent-hover);
+  border: 1px solid var(--color-accent-soft-border);
+  font-size: 12px;
+  font-weight: 600;
+  padding: 3px 6px 3px 10px;
+  border-radius: 999px;
+}
+
+.tag-chip button {
+  background: none;
+  border: none;
+  color: var(--color-accent-hover);
+  font-size: 14px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0 2px;
+}
+
+.tag-chip button:hover {
+  color: var(--color-danger);
+}
+
+.tag-picker-input {
+  width: 100%;
+  padding: 8px 12px;
+  font-size: 13px;
+  font-family: 'Inter', sans-serif;
+  border: 1.5px solid var(--color-border);
+  border-radius: 8px;
+  outline: none;
+  box-sizing: border-box;
+  transition: border-color 0.15s ease;
+  background: var(--color-surface);
+  color: var(--color-text);
+}
+
+.tag-picker-input:focus {
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 3px rgba(252,99,107,0.15);
+}
+
+.tag-picker-suggestions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.tag-suggestion-btn {
+  background: var(--color-surface-subtle);
+  border: 1px solid var(--color-border);
+  color: var(--color-text-secondary);
+  font-size: 11.5px;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.tag-suggestion-btn:hover {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+}
+
+/* ===== Badge nhãn hiển thị trên TaskCard (Kanban) ===== */
+
+.task-tag-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-bottom: 10px;
+}
+
+.task-tag-badge {
+  font-size: 10.5px;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  background: var(--color-surface-subtle-2);
+  padding: 2px 8px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+/* ===== Khối Subtask (Công việc con) trong TaskDetailModal ===== */
+
+.subtask-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.subtask-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border-radius: 6px;
+  border-left: 3px solid var(--color-border);
+  background: var(--color-surface-subtle);
+}
+
+/* Màu độ ưu tiên giữ cố định, giống task-card, để đồng bộ ý nghĩa xuyên suốt mọi theme */
+.subtask-item[data-priority="high"] { border-left-color: #FC636B; }
+.subtask-item[data-priority="medium"] { border-left-color: #F5A623; }
+.subtask-item[data-priority="low"] { border-left-color: #34A853; }
+
+.subtask-item input[type="checkbox"] {
+  accent-color: var(--color-accent);
+  cursor: pointer;
+}
+
+.subtask-title {
+  flex: 1;
+  font-size: 13px;
+  color: var(--color-text);
+}
+
+.subtask-title.subtask-done {
+  text-decoration: line-through;
+  color: var(--color-text-muted);
+}
+
+.task-subtask-count {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  margin-bottom: 8px;
+}
+
+/* ===== Xếp Nhãn + Công việc con nằm ngang ===== */
+.task-detail-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.task-detail-row .content-section {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.task-detail-row .content-section:only-child {
+  grid-column: 1 / -1;
+}
+
+.task-detail-row .content-section .content-actions,
+.task-detail-row .content-section .comment-input-row {
+  margin-top: auto;
+}
+
+/* ===== Modal riêng cho TaskDetailModal, nới rộng hơn mặc định ===== */
+.modal-box.modal-wide {
+  max-width: 720px;
+  width: 92%;
+}

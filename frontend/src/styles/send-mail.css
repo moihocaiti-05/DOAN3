@@ -1,0 +1,579 @@
+/* ===== Hộp thoại "Gửi mail công việc" =====
+   Toàn bộ màu lấy từ các biến theme của dự án (nhóm biến bắt đầu bằng --color), nên tự đổi theo theme sáng/tối và màu chủ đạo.
+   Chỉ có màu độ ưu tiên (đỏ/cam/xanh) và lớp nền tối phía sau hộp thoại là màu ngữ nghĩa cố định. */
+
+/* Lớp nền tối phủ toàn màn hình, nằm trên mọi thứ khác */
+.send-mail-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: rgba(0, 0, 0, 0.55);
+}
+
+/* Khung hộp thoại: rộng tới 980px, cao tối đa 90% màn hình; phần thân tự cuộn nên không bao giờ tràn màn hình */
+.send-mail-dialog {
+  --sm-high: #E5484D;
+  --sm-medium: #D98E04;
+  --sm-low: #3FA66B;
+  width: min(980px, 100%);
+  max-height: min(90vh, 780px);
+  display: flex;
+  flex-direction: column;
+  background: var(--color-surface);
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
+  border-radius: 16px;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
+  overflow: hidden;
+}
+
+/* Thanh tiêu đề: tên bên trái, nút đóng bên phải */
+.send-mail-dialog-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 24px;
+  border-bottom: 1px solid var(--color-border-light);
+}
+
+.send-mail-dialog-title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.send-mail-close {
+  background: none;
+  border: none;
+  padding: 0 4px;
+  font-size: 26px;
+  line-height: 1;
+  cursor: pointer;
+  color: var(--color-text-secondary);
+}
+
+.send-mail-close:hover {
+  color: var(--color-text);
+}
+
+/* Phần thân: cuộn riêng khi màn hình thấp */
+.send-mail-dialog-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 20px 24px;
+}
+
+/* Chân hộp thoại: tóm tắt bên trái, nút bên phải */
+.send-mail-dialog-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px 16px;
+  padding: 14px 24px;
+  border-top: 1px solid var(--color-border-light);
+}
+
+.send-mail-summary {
+  flex: 1;
+  min-width: 220px;
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--color-text-secondary);
+}
+
+.send-mail-warning {
+  color: var(--color-danger, #D14343);
+}
+
+.send-mail-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.send-mail-actions button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* 2 cột: công việc (rộng hơn) bên trái, người nhận bên phải; màn hình hẹp thì xếp chồng */
+.send-mail-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
+  gap: 16px;
+}
+
+@media (max-width: 760px) {
+  .send-mail-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .send-mail-dialog-head,
+  .send-mail-dialog-body,
+  .send-mail-dialog-foot {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+}
+
+/* Mỗi cột là 1 khối riêng */
+.send-mail-panel {
+  min-width: 0;
+  padding: 14px;
+  border: 1px solid var(--color-border-light);
+  border-radius: 12px;
+  background: var(--color-surface-subtle);
+}
+
+/* Hàng tiêu đề của mỗi cột: [số bước + tên + số đã chọn] bên trái, [Chọn tất cả / Bỏ chọn] bên phải */
+.send-mail-panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 6px 12px;
+  margin-bottom: 12px;
+}
+
+.send-mail-step {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+/* Vòng tròn số bước 1, 2 */
+.send-mail-step-num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  font-size: 12px;
+  font-weight: 700;
+  color: #fff;
+  background: var(--color-accent);
+}
+
+/* Viên thuốc hiện số đã chọn: xám khi chưa chọn, màu chủ đạo khi đã chọn, đỏ khi vượt giới hạn */
+.send-mail-count-pill {
+  font-size: 12px;
+  font-weight: 600;
+  padding: 2px 10px;
+  border-radius: 999px;
+  background: var(--color-surface-subtle-2);
+  color: var(--color-text-secondary);
+}
+
+.send-mail-count-pill-active {
+  background: var(--color-accent-soft-bg);
+  color: var(--color-accent);
+}
+
+.send-mail-count-pill-over {
+  background: color-mix(in srgb, var(--color-danger, #D14343) 18%, transparent);
+  color: var(--color-danger, #D14343);
+}
+
+/* Dòng ghi chú nhỏ */
+.send-mail-note {
+  margin: -4px 0 10px;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--color-text-muted);
+}
+
+.send-mail-links {
+  display: flex;
+  gap: 14px;
+}
+
+/* Nút chữ nhỏ (Chọn tất cả, Bỏ chọn) */
+.send-mail-link-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  color: var(--color-accent);
+}
+
+.send-mail-link-btn:hover {
+  text-decoration: underline;
+}
+
+/* Hàng bộ lọc công việc: ô tìm bên trái, ô "Ẩn việc đã xong" bên phải */
+.send-mail-filters {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 14px;
+  margin-bottom: 10px;
+}
+
+.send-mail-search-wrap {
+  position: relative;
+  flex: 1;
+  min-width: 160px;
+}
+
+.send-mail-search-icon {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 13px;
+  pointer-events: none; /* bấm xuyên qua biểu tượng vào ô nhập */
+}
+
+.send-mail-search {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 8px 10px 8px 32px;
+  font: inherit;
+  font-size: 14px;
+  border-radius: 8px;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text);
+}
+
+.send-mail-search::placeholder,
+.send-mail-textarea::placeholder {
+  color: var(--color-text-muted);
+}
+
+.send-mail-check {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  white-space: nowrap;
+  cursor: pointer;
+  color: var(--color-text-secondary);
+}
+
+.send-mail-check input {
+  cursor: pointer;
+  accent-color: var(--color-accent);
+}
+
+/* Nút chuyển cách gửi: 2 nửa dính liền, nửa đang chọn tô màu chủ đạo */
+.send-mail-segment {
+  display: flex;
+  margin-bottom: 6px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.send-mail-segment button {
+  flex: 1;
+  padding: 7px 10px;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  background: transparent;
+  color: var(--color-text-secondary);
+}
+
+.send-mail-segment button + button {
+  border-left: 1px solid var(--color-border);
+}
+
+.send-mail-segment .send-mail-segment-active {
+  background: var(--color-accent-soft-bg);
+  color: var(--color-accent);
+}
+
+.send-mail-hint {
+  margin: 0 0 12px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--color-text-muted);
+}
+
+/* Khung danh sách có thanh cuộn riêng; giới hạn theo chiều cao màn hình để hộp thoại không quá dài */
+.send-mail-list {
+  max-height: min(300px, 34vh);
+  overflow-y: auto;
+  border: 1px solid var(--color-border-light);
+  border-radius: 10px;
+  background: var(--color-surface);
+}
+
+/* Mỗi dòng (1 công việc hoặc 1 người) */
+.send-mail-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  cursor: pointer;
+  border-bottom: 1px solid var(--color-border-light);
+}
+
+.send-mail-row:last-child {
+  border-bottom: none;
+}
+
+.send-mail-row:hover {
+  background: var(--color-surface-subtle-2);
+}
+
+/* Dòng đang được tích: nền nhạt màu chủ đạo */
+.send-mail-row-selected,
+.send-mail-row-selected:hover {
+  background: var(--color-accent-soft-bg);
+}
+
+/* Dòng không tích được (việc chưa giao ở chế độ "Chỉ việc của họ") */
+.send-mail-row-disabled,
+.send-mail-row-disabled:hover {
+  cursor: not-allowed;
+  opacity: 0.55;
+  background: transparent;
+}
+
+.send-mail-row input[type='checkbox'] {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  cursor: inherit;
+  accent-color: var(--color-accent);
+}
+
+.send-mail-row-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.send-mail-row-title {
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.4;
+  word-break: break-word;
+}
+
+/* Việc đã hoàn thành: chữ gạch ngang và mờ đi */
+.send-mail-row-title-done {
+  text-decoration: line-through;
+  color: var(--color-text-muted);
+}
+
+/* Hàng thông tin phụ bên dưới tên việc: độ ưu tiên, trạng thái, hạn */
+.send-mail-meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  margin-top: 4px;
+  font-size: 12px;
+}
+
+.send-mail-meta-text {
+  color: var(--color-text-muted);
+}
+
+/* Viên thuốc độ ưu tiên: màu ngữ nghĩa cố định (đỏ / cam / xanh), nền là màu đó pha trong suốt */
+.send-mail-pill {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 1px 9px;
+  border-radius: 999px;
+}
+
+.send-mail-pill-high {
+  background: color-mix(in srgb, var(--sm-high) 18%, transparent);
+  color: var(--sm-high);
+}
+
+.send-mail-pill-medium {
+  background: color-mix(in srgb, var(--sm-medium) 18%, transparent);
+  color: var(--sm-medium);
+}
+
+.send-mail-pill-low {
+  background: color-mix(in srgb, var(--sm-low) 18%, transparent);
+  color: var(--sm-low);
+}
+
+/* Vòng tròn chữ cái đầu của tên (thay cho ảnh đại diện) */
+.send-mail-avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  font-size: 13px;
+  font-weight: 700;
+  background: var(--color-accent-soft-bg);
+  color: var(--color-accent);
+}
+
+.send-mail-avatar-sm {
+  width: 22px;
+  height: 22px;
+  font-size: 11px;
+}
+
+/* Người phụ trách ở bên phải mỗi dòng việc: avatar nhỏ + tên (cắt bớt nếu dài) */
+.send-mail-assignee {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+  max-width: 150px;
+  font-size: 12px;
+  color: var(--color-text-secondary);
+}
+
+.send-mail-assignee-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Tên người nhận + huy hiệu Trưởng nhóm */
+.send-mail-member-name {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.send-mail-leader-badge {
+  font-size: 10.5px;
+  font-weight: 600;
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: var(--color-accent-soft-bg);
+  color: var(--color-accent);
+}
+
+.send-mail-member-email {
+  margin-top: 2px;
+  font-size: 12px;
+  color: var(--color-text-muted);
+  word-break: break-all;
+}
+
+/* Số việc người đó SẼ nhận, nằm bên phải mỗi dòng người nhận */
+.send-mail-row-count {
+  flex-shrink: 0;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 2px 10px;
+  border-radius: 999px;
+  background: var(--color-surface-subtle-2);
+  color: var(--color-text-muted);
+}
+
+.send-mail-row-count-active {
+  background: var(--color-accent-soft-bg);
+  color: var(--color-accent);
+}
+
+/* Trạng thái trống: căn giữa, có biểu tượng, hai dòng chữ */
+.send-mail-empty {
+  text-align: center;
+  padding: 28px 16px;
+}
+
+.send-mail-empty-icon {
+  font-size: 28px;
+  margin-bottom: 8px;
+}
+
+.send-mail-empty-title {
+  margin: 0 0 4px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.send-mail-empty-sub {
+  margin: 0;
+  font-size: 12.5px;
+  color: var(--color-text-muted);
+}
+
+/* Ô lời nhắn nằm dưới cả 2 cột */
+.send-mail-message {
+  margin-top: 16px;
+}
+
+.send-mail-label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.send-mail-textarea {
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 56px;
+  resize: vertical;
+  font: inherit;
+  font-size: 14px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text);
+}
+
+.send-mail-char-count {
+  margin: 4px 0 0;
+  text-align: right;
+  font-size: 12px;
+  color: var(--color-text-muted);
+}
+
+/* Thông báo lỗi khi gửi thất bại */
+.send-mail-error {
+  margin-top: 12px;
+  padding: 9px 12px;
+  font-size: 12.5px;
+  color: var(--color-danger, #D14343);
+  background: color-mix(in srgb, var(--color-danger, #D14343) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--color-danger, #D14343) 35%, transparent);
+  border-radius: 8px;
+}
+
+/* Màn hình kết quả sau khi gửi xong */
+.send-mail-result {
+  text-align: center;
+  padding: 28px 14px;
+}
+
+.send-mail-result-icon {
+  font-size: 40px;
+  margin-bottom: 8px;
+}
+
+.send-mail-result-title {
+  margin: 0 0 4px;
+  font-size: 17px;
+  font-weight: 700;
+}
+
+.send-mail-result-sub {
+  margin: 0;
+  font-size: 13px;
+  color: var(--color-text-secondary);
+}

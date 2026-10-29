@@ -1,0 +1,393 @@
+/* Quy ước file này: mọi màu chữ / nền / viền đều dùng biến theme var(--color-*) để đổi giao diện là màu đổi theo.
+   Phần sau dấu phẩy trong var() là màu dự phòng (chính là màu cũ), dùng khi biến chưa được khai báo. */
+
+/* ===== Phần đầu Modal chi tiết task ===== */
+.task-detail-desc {
+  font-size: 13.5px;
+  color: var(--color-text-secondary, #6B6F76);
+  margin: -8px 0 16px;
+}
+
+.task-detail-meta {
+  display: flex;
+  gap: 16px;
+  font-size: 12.5px;
+  color: var(--color-text-muted, #9CA0A8);
+  margin-bottom: 20px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--color-border-light, #F1F1F3);
+}
+
+/* Tiêu đề nhỏ của từng khối (Nội dung chi tiết, Nhãn, File đính kèm, Bình luận...) */
+.comment-section-title {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--color-text-secondary, #6B6F76);
+  margin-bottom: 12px;
+}
+
+/* ===== Khu vực Bình luận ===== */
+.comment-list {
+  max-height: 220px;
+  overflow-y: auto;
+  margin-bottom: 14px;
+}
+
+.comment-item {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+/* Vòng tròn chữ cái đầu của người viết - nền màu nhấn, chữ trắng giữ nguyên ở mọi theme */
+.comment-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--color-accent, #FC636B);
+  color: #FFFFFF;
+  font-size: 10.5px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.comment-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.comment-header-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 2px;
+}
+
+.comment-author {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--color-text, #151B26);
+}
+
+/* Nhãn vai trò cạnh tên người bình luận (Giảng viên / Trưởng nhóm / Thành viên) */
+.comment-role {
+  font-size: 10.5px;
+  font-weight: 600;
+  padding: 1px 8px;
+  border-radius: 999px;
+}
+
+/* Giảng viên: màu nhấn để nổi bật nhất */
+.comment-role-supervisor {
+  background: var(--color-accent-soft-bg, #FFF5F5);
+  color: var(--color-accent, #FC636B);
+  border: 1px solid var(--color-accent-soft-border, #FFD9DB);
+}
+
+/* Trưởng nhóm và Thành viên: màu trung tính */
+.comment-role-leader,
+.comment-role-member {
+  background: var(--color-surface-subtle-2, #F1F1F3);
+  color: var(--color-text-secondary, #6B6F76);
+}
+
+.comment-time {
+  font-size: 11px;
+  color: var(--color-text-muted, #B0B4BB);
+}
+
+/* Nút Xóa nhỏ (dùng chung cho bình luận, công việc con, file đính kèm) */
+.comment-delete-btn {
+  margin-left: auto;
+  background: none;
+  border: none;
+  font-size: 11px;
+  color: var(--color-text-muted, #B0B4BB);
+  cursor: pointer;
+}
+
+.comment-delete-btn:hover {
+  color: var(--color-danger, #C0392B);
+}
+
+.comment-text {
+  font-size: 13px;
+  color: var(--color-text, #3B3F45);
+  line-height: 1.4;
+}
+
+/* Hàng ô nhập bình luận + nút Gửi (cũng dùng cho ô "+ Thêm công việc con") */
+.comment-input-row {
+  display: flex;
+  gap: 8px;
+  padding-top: 12px;
+  border-top: 1px solid var(--color-border-light, #F1F1F3);
+}
+
+/* MỚI THÊM: background + color cho ô nhập, trước đây thiếu nên ô luôn trắng trên nền tối */
+.comment-input-row input {
+  flex: 1;
+  padding: 8px 12px;
+  font-size: 13px;
+  background: var(--color-surface, #FFFFFF);
+  color: var(--color-text, #151B26);
+  border: 1.5px solid var(--color-border, #E4E4E7);
+  border-radius: 8px;
+  outline: none;
+}
+
+.comment-input-row input:focus {
+  border-color: var(--color-accent, #FC636B);
+}
+
+/* ===== Khu vực File đính kèm ===== */
+.attachment-section {
+  margin-bottom: 20px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--color-border-light, #F1F1F3);
+}
+
+.attachment-list {
+  margin-bottom: 10px;
+}
+
+.attachment-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px;
+  border: 1px solid var(--color-border-light, #F1F1F3);
+  border-radius: 8px;
+  margin-bottom: 6px;
+}
+
+.attachment-icon {
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.attachment-info {
+  flex: 1;
+  min-width: 0;
+  cursor: pointer;
+}
+
+.attachment-info:hover .attachment-name {
+  color: var(--color-accent, #FC636B);
+}
+
+.attachment-name {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--color-text, #151B26);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.attachment-meta {
+  font-size: 11px;
+  color: var(--color-text-muted, #9CA0A8);
+}
+
+/* Nút "+ Đính kèm file" viền nét đứt */
+.attachment-upload-btn {
+  display: inline-block;
+  padding: 7px 14px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--color-accent, #FC636B);
+  border: 1.5px dashed var(--color-accent, #FC636B);
+  border-radius: 8px;
+  cursor: pointer;
+  text-align: center;
+}
+
+.attachment-upload-btn:hover {
+  background: var(--color-accent-soft-bg, #FFF5F5);
+}
+
+/* Thumbnail ảnh nhỏ trong danh sách đính kèm */
+.attachment-thumbnail {
+  width: 40px;
+  height: 40px;
+  border-radius: 6px;
+  object-fit: cover;
+  flex-shrink: 0;
+  cursor: pointer;
+}
+
+/* ===== Khu vực nội dung tự do (gõ/dán) ===== */
+.content-section {
+  margin-bottom: 20px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--color-border-light, #F1F1F3);
+}
+
+/* MỚI THÊM: background + color cho ô nhập nội dung, để đổi theme ô này cũng đổi màu theo */
+.content-textarea {
+  width: 100%;
+  padding: 10px 12px;
+  font-size: 13px;
+  font-family: 'Inter', sans-serif;
+  background: var(--color-surface, #FFFFFF);
+  color: var(--color-text, #151B26);
+  border: 1.5px solid var(--color-border, #E4E4E7);
+  border-radius: 8px;
+  outline: none;
+  resize: vertical;
+  box-sizing: border-box;
+  margin-bottom: 10px;
+}
+
+.content-textarea:focus {
+  border-color: var(--color-accent, #FC636B);
+}
+
+.content-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+/* Chữ "✓ Đã lưu" - màu xanh lá báo thành công, giữ cố định ở mọi theme */
+.content-saved-hint {
+  font-size: 12px;
+  color: #4CAF7D;
+  font-weight: 600;
+}
+
+/* ===== Lightbox xem ảnh phóng to toàn màn hình (nền đen mờ + chữ trắng, giữ cố định ở mọi theme) ===== */
+.lightbox-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.85);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 500;
+}
+
+.lightbox-toolbar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 24px;
+  background: rgba(0,0,0,0.4);
+}
+
+.lightbox-filename {
+  color: #FFFFFF;
+  font-size: 13px;
+}
+
+.lightbox-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.lightbox-close {
+  background: rgba(255,255,255,0.15);
+  border: none;
+  color: #FFFFFF;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.lightbox-image {
+  max-width: 85vw;
+  max-height: 80vh;
+  object-fit: contain;
+  border-radius: 6px;
+}
+
+/* ===== Khối nút Sửa/Xóa task ở đầu TaskDetailModal ===== */
+.task-manage-actions {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+/* Nút nguy hiểm (Xóa): chữ + viền màu danger của theme, nền là màu danger pha loãng 12% (color-mix)
+   nên theme sáng hay tối đều đọc rõ, không còn nền hồng cứng */
+.btn-danger {
+  padding: 8px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-danger, #C0392B);
+  background: color-mix(in srgb, var(--color-danger, #C0392B) 12%, transparent);
+  border: 1.5px solid color-mix(in srgb, var(--color-danger, #C0392B) 40%, transparent);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.btn-danger:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--color-danger, #C0392B) 22%, transparent);
+}
+
+.btn-danger:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ===== Form Sửa thông tin chung của task (tên, độ ưu tiên, deadline) ===== */
+.task-edit-form {
+  margin-bottom: 20px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--color-border-light, #F1F1F3);
+}
+
+/* Input/select trong form Sửa - khai báo lại ở đây vì auth.css có thể không được import trong trang này */
+.task-edit-form .auth-field input,
+.task-edit-form .auth-field select {
+  width: 100%;
+  padding: 9px 12px;
+  font-size: 13px;
+  font-family: 'Inter', sans-serif;
+  background: var(--color-surface, #FFFFFF);
+  color: var(--color-text, #151B26);
+  border: 1.5px solid var(--color-border, #E4E4E7);
+  border-radius: 8px;
+  outline: none;
+  box-sizing: border-box;
+  transition: border-color 0.15s ease;
+}
+
+.task-edit-form .auth-field input:focus,
+.task-edit-form .auth-field select:focus {
+  border-color: var(--color-accent, #FC636B);
+  box-shadow: 0 0 0 3px rgba(252,99,107,0.15);
+}
+
+.task-edit-form .auth-field label {
+  display: block;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--color-text, #3B3F45);
+  margin-bottom: 6px;
+}
+
+.task-edit-form .auth-field {
+  margin-bottom: 14px;
+}
+
+.task-edit-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 4px;
+}

@@ -1,0 +1,238 @@
+.auth-page {
+  min-height: 100vh;
+  display: flex;
+  font-family: 'Inter', sans-serif;
+  background: #FFFFFF;
+  color: #151B26;
+}
+
+.auth-brand {
+  flex: 1;
+  background: #151B26;
+  color: #FFFFFF;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 64px;
+  position: relative;
+  overflow: hidden;
+}
+
+.auth-brand::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(circle, rgba(252,99,107,0.15) 1.5px, transparent 1.5px);
+  background-size: 28px 28px;
+}
+
+.auth-brand-content {
+  position: relative;
+  z-index: 1;
+  max-width: 380px;
+}
+
+.auth-brand-title {
+  font-size: 36px;
+  font-weight: 700;
+  line-height: 1.2;
+  margin: 0 0 20px;
+  letter-spacing: -0.02em;
+}
+
+.auth-brand-text {
+  font-size: 15px;
+  line-height: 1.7;
+  color: rgba(255,255,255,0.7);
+  margin: 0 0 32px;
+}
+
+.auth-checklist {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.auth-checklist-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 14px;
+  color: rgba(255,255,255,0.9);
+}
+
+.auth-checklist-dot {
+  width: 20px;
+  height: 20px;
+  border-radius: 6px;
+  background: #FC636B;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  color: #FFFFFF;
+  font-weight: 700;
+}
+
+.auth-form-side {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 24px;
+}
+
+.auth-form-box {
+  width: 100%;
+  max-width: 380px;
+}
+
+.auth-form-title {
+  font-size: 26px;
+  font-weight: 700;
+  margin: 0 0 8px;
+  color: #151B26;
+  letter-spacing: -0.01em;
+}
+
+.auth-form-subtitle {
+  font-size: 14px;
+  color: #6B6F76;
+  margin: 0 0 32px;
+}
+
+.auth-field {
+  margin-bottom: 18px;
+}
+
+.auth-field label {
+  display: block;
+  font-size: 13px;
+  font-weight: 500;
+  color: #3B3F45;
+  margin-bottom: 6px;
+}
+
+.auth-field input,
+.auth-field select {
+  width: 100%;
+  padding: 11px 14px;
+  font-size: 14px;
+  font-family: 'Inter', sans-serif;
+  border: 1.5px solid #E4E4E7;
+  border-radius: 8px;
+  background: #FFFFFF;
+  outline: none;
+  box-sizing: border-box;
+  transition: border-color 0.15s ease;
+}
+
+.auth-field input:focus,
+.auth-field select:focus {
+  border-color: #FC636B;
+  box-shadow: 0 0 0 3px rgba(252,99,107,0.15);
+}
+
+/* MỚI THÊM: nhóm 2 lựa chọn Sinh viên / Giảng viên, xếp ngang nhau, cách đều */
+.auth-role-group {
+  display: flex;
+  gap: 10px;
+}
+
+/* MỚI THÊM: mỗi lựa chọn là 1 "thẻ" bo góc giống style card của Asana,
+   bấm vào cả thẻ chứ không chỉ vào chấm radio nhỏ, dễ dùng hơn trên mobile */
+.auth-role-option {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  font-size: 13.5px;
+  font-weight: 500;
+  color: #3B3F45;
+  border: 1.5px solid #E4E4E7;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
+  /* ghi đè margin-bottom mặc định của label trong .auth-field label ở trên */
+  margin-bottom: 0;
+}
+
+/* Khi hover vào thẻ (chưa chọn) — gợi ý có thể bấm được */
+.auth-role-option:hover {
+  border-color: #FC636B;
+}
+
+/* MỚI THÊM: input radio bên trong thẻ, giữ kích thước vừa phải, đổi màu accent theo tông coral */
+.auth-role-option input[type='radio'] {
+  width: 15px;
+  height: 15px;
+  accent-color: #FC636B;
+  cursor: pointer;
+  /* ghi đè width: 100% mặc định của .auth-field input ở trên, nếu không radio sẽ bị kéo giãn full width */
+  flex: none;
+}
+
+/* MỚI THÊM: trạng thái thẻ đang được chọn — dùng :has() để tô màu cả thẻ khi radio con được check */
+.auth-role-option:has(input:checked) {
+  border-color: #FC636B;
+  background: rgba(252,99,107,0.06);
+  color: #151B26;
+  font-weight: 600;
+}
+
+.auth-error {
+  background: #FEF2F2;
+  color: #C0392B;
+  font-size: 13px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+}
+
+.auth-submit {
+  width: 100%;
+  padding: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #FFFFFF;
+  background: #FC636B;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.auth-submit:hover:not(:disabled) {
+  background: #E14E56;
+}
+
+.auth-submit:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.auth-switch {
+  margin-top: 22px;
+  font-size: 13.5px;
+  color: #6B6F76;
+  text-align: center;
+}
+
+.auth-switch a {
+  color: #FC636B;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.auth-switch a:hover {
+  text-decoration: underline;
+}
+
+@media (max-width: 768px) {
+  .auth-page { flex-direction: column; }
+  .auth-brand { padding: 40px 24px; min-height: 220px; }
+  .auth-brand-title { font-size: 26px; }
+  .auth-checklist { display: none; }
+}

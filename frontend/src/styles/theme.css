@@ -1,0 +1,80 @@
+/* ===== Hệ thống biến màu (CSS Variables) - nền tảng cho tính năng đổi giao diện ===== */
+/* Theme mặc định (Sáng) định nghĩa trên :root - áp dụng khi chưa chọn gì hoặc data-theme="light" */
+:root,
+[data-theme="light"] {
+  --color-bg: #F7F7F8;              /* nền toàn trang - đổi từ trắng tinh sang xám ấm nhẹ, đỡ chói hơn bản gốc */
+  --color-surface: #FFFFFF;         /* nền card/modal/panel - vẫn trắng để nổi bật trên nền trang */
+  --color-surface-subtle: #FAFAFA;  /* nền các khối phụ (cột Kanban...) */
+  --color-surface-subtle-2: #F1F1F3;/* nền các khối phụ đậm hơn 1 chút (badge, khối gợi ý...) */
+  --color-border: #E4E4E7;
+  --color-border-light: #F1F1F3;
+  --color-text: #151B26;
+  --color-text-secondary: #6B6F76;
+  --color-text-muted: #9CA0A8;
+  --color-accent: #FC636B;          /* màu nhấn coral - giữ nguyên xuyên suốt mọi theme cho đồng nhất thương hiệu */
+  --color-accent-hover: #E14E56;
+  --color-accent-soft-bg: #FFF5F5;
+  --color-accent-soft-border: #FFD9DB;
+  --color-danger: #C0392B;
+  --color-overlay: rgba(21,27,38,0.5);
+}
+
+[data-theme="dark"] {
+  --color-bg: #16181C;
+  --color-surface: #1F2227;
+  --color-surface-subtle: #24272C;
+  --color-surface-subtle-2: #2B2E34;
+  --color-border: #33363C;
+  --color-border-light: #2B2E34;
+  --color-text: #EDEEF0;
+  --color-text-secondary: #A8ADB5;
+  --color-text-muted: #7D828B;
+  --color-accent: #FC636B;
+  --color-accent-hover: #FF7B82;
+  --color-accent-soft-bg: #3A2224;
+  --color-accent-soft-border: #5A2E31;
+  --color-danger: #FF6B6B;
+  --color-overlay: rgba(0,0,0,0.65);
+}
+
+[data-theme="warm"] {
+  --color-bg: #FBF3E9;
+  --color-surface: #FFFDF8;
+  --color-surface-subtle: #F6EBDD;
+  --color-surface-subtle-2: #F1E2CF;
+  --color-border: #E9D6BC;
+  --color-border-light: #F1E2CF;
+  --color-text: #3A2E20;
+  --color-text-secondary: #8A7357;
+  --color-text-muted: #A6906F;
+  --color-accent: #FC636B;
+  --color-accent-hover: #E14E56;
+  --color-accent-soft-bg: #FFF1EE;
+  --color-accent-soft-border: #FFD9D2;
+  --color-danger: #C0392B;
+  --color-overlay: rgba(58,46,32,0.45);
+}
+
+[data-theme="blue"] {
+  --color-bg: #EEF4FA;
+  --color-surface: #FFFFFF;
+  --color-surface-subtle: #E3EDF6;
+  --color-surface-subtle-2: #D8E5F0;
+  --color-border: #CBDCEA;
+  --color-border-light: #DCE8F2;
+  --color-text: #1C2B3A;
+  --color-text-secondary: #5C7386;
+  --color-text-muted: #839AAC;
+  --color-accent: #FC636B;
+  --color-accent-hover: #E14E56;
+  --color-accent-soft-bg: #FFF1F1;
+  --color-accent-soft-border: #FFD9DB;
+  --color-danger: #C0392B;
+  --color-overlay: rgba(21,43,58,0.5);
+}
+
+/* Chuyển màu mượt khi đổi theme, thay vì đổi phựt 1 cái - áp cho toàn trang */
+body {
+  background: var(--color-bg);
+  transition: background 0.2s ease;
+}
