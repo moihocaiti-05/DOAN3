@@ -8,8 +8,10 @@ import PendingReviewBox from '../components/PendingReviewBox'; // MỚI THÊM (t
 import UpcomingDeadlinesBox from '../components/UpcomingDeadlinesBox'; // MỚI THÊM (tính năng 5): hộp "Sắp đến hạn"
 import RemindGroupModal from '../components/RemindGroupModal'; // MỚI THÊM (tính năng 2): hộp thoại "Nhắc nhóm"
 import ContributionModal from '../components/ContributionModal'; // MỚI THÊM (tính năng 3): hộp thoại "Đóng góp" từng thành viên
+import EvaluationModal from '../components/EvaluationModal'; // MỚI THÊM (GV7): hộp thoại "Đánh giá theo mốc"
 import '../styles/supervisor-dashboard.css'; // CSS RIÊNG của Giảng viên, không dùng chung home.css với Sinh viên
 import '../styles/supervisor-export.css'; // MỚI THÊM (tính năng 4): nút "Xuất Excel"
+import '../styles/supervisor-pin.css'; // MỚI THÊM (GV6): ô tìm kiếm + nút ghim nhóm
 
 // Chữ hiển thị cho 3 trạng thái nhóm (Backend trả về status là 'late' | 'idle' | 'ok')
 const STATUS_LABEL = { late: 'Trễ hạn', idle: 'Ít hoạt động', ok: 'Đang ổn' };
@@ -24,6 +26,16 @@ const COLUMNS = [
   { key: 'idleDays', label: 'Hoạt động' },
   { key: 'status', label: 'Trạng thái' },
 ];
+
+// MỚI THÊM (GV6): bỏ dấu tiếng Việt + chữ thường, để gõ "nhom 1" vẫn tìm ra "Nhóm 1"
+const normalize = (text) =>
+  (text || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/đ/g, 'd')
+    .replace(/Đ/g, 'D')
+    .toLowerCase()
+    .trim();
 
 // Câu mô tả lần hoạt động gần nhất
 const activityText = (g) => {
@@ -74,6 +86,9 @@ export default function SupervisorDashboard() {
   const [contribGroup, setContribGroup] = useState(null); // MỚI THÊM (tính năng 3): nhóm đang mở hộp thoại "Đóng góp" (null = đóng)
   const [exporting, setExporting] = useState(false); // MỚI THÊM (tính năng 4): đang tải file Excel (khóa nút để không bấm 2 lần)
   const [exportError, setExportError] = useState(''); // MỚI THÊM (tính năng 4): câu báo lỗi khi xuất thất bại
+  const [search, setSearch] = useState(''); // MỚI THÊM (GV6): chữ đang gõ trong ô tìm nhóm theo tên
+  const [pinError, setPinError] = useState(''); // MỚI THÊM (GV6): câu báo lỗi khi ghim thất bại
+  const [evalGroup, setEvalGroup] = useState(null); // MỚI THÊM (GV7): nhóm đang mở hộp thoại "Đánh giá theo mốc" (null = đóng)
 
   useEffect(() => {
     supervisorApi
@@ -106,10 +121,28 @@ export default function SupervisorDashboard() {
   // Đếm số nhóm theo trạng thái (dùng cho thẻ số liệu và nút lọc)
   const count = (s) => groups.filter((g) => g.status === s).length;
 
-  // Lọc rồi sắp xếp; cùng giá trị thì xếp theo tên để thứ tự ổn định
+  // MỚI THÊM (GV6): ghim / bỏ ghim 1 nhóm. Cập nhật giao diện NGAY (cho mượt), nếu Backend báo lỗi thì trả lại như cũ
+  const handleTogglePin = async (e, group) => {
+    e.stopPropagation(); // bấm nút ghim không bị tính là bấm cả dòng/thẻ (mở nhóm)
+    const next = !group.pinned;
+    setPinError('');
+    setGroups((list) => list.map((g) => (g.id === group.id ? { ...g, pinned: next } : g)));
+    try {
+      await supervisorApi.pinGroup(group.id, next);
+    } catch {
+      setGroups((list) => list.map((g) => (g.id === group.id ? { ...g, pinned: !next } : g)));
+      setPinError('Ghim nhóm thất bại, hãy thử lại.');
+    }
+  };
+
+  // MỚI SỬA (GV6): lọc theo trạng thái + tên nhóm, rồi sắp xếp; nhóm ĐÃ GHIM luôn nằm trên cùng (bất kể cột đang sắp xếp)
+  // Trong mỗi phần (đã ghim / chưa ghim) vẫn sắp theo cột đang chọn; cùng giá trị thì xếp theo tên để thứ tự ổn định
+  const keyword = normalize(search);
   const visible = groups
     .filter((g) => filter === 'all' || g.status === filter)
+    .filter((g) => !keyword || normalize(g.name).includes(keyword))
     .sort((a, b) => {
+      if (a.pinned !== b.pinned) return a.pinned ? -1 : 1;
       const va = getSortValue(a, sortKey);
       const vb = getSortValue(b, sortKey);
       let result = typeof va === 'string' ? va.localeCompare(vb, 'vi') : va - vb;
@@ -129,6 +162,18 @@ export default function SupervisorDashboard() {
   const openContribution = (e, group) => {
     e.stopPropagation();
     setContribGroup(group);
+  };
+
+  // MỚI THÊM (GV7): mở hộp thoại đánh giá theo mốc; cũng stopPropagation vì lý do như trên
+  const openEvaluation = (e, group) => {
+    e.stopPropagation();
+    setEvalGroup(group);
+  };
+
+  // MỚI THÊM (GV9): mở trang biểu đồ của 1 nhóm; cũng stopPropagation để không bị tính là bấm cả dòng/thẻ (mở nhóm)
+  const openCharts = (e, group) => {
+    e.stopPropagation();
+    navigate(`/supervisor/groups/${group.id}/charts`);
   };
 
   // MỚI THÊM (tính năng 4): tải file Excel tổng hợp tất cả nhóm
@@ -231,6 +276,22 @@ export default function SupervisorDashboard() {
               </div>
             </div>
 
+            {/* MỚI THÊM (GV6): ô tìm nhóm theo tên (không phân biệt hoa thường và dấu) */}
+            <div className="pn-search-wrap">
+              <input
+                type="text"
+                className="pn-search"
+                placeholder="Tìm nhóm theo tên..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+              {search && (
+                <button className="pn-search-clear" onClick={() => setSearch('')} aria-label="Xóa tìm kiếm">
+                  ✕
+                </button>
+              )}
+            </div>
+
             {/* Thanh công cụ: lọc theo trạng thái (trái), xuất Excel và chuyển Bảng/Thẻ (phải) */}
             <div className="sv-toolbar">
               {[
@@ -267,10 +328,11 @@ export default function SupervisorDashboard() {
             </div>
 
             {exportError && <p className="ex-error">{exportError}</p>}
+            {pinError && <p className="ex-error">{pinError}</p>}
 
             {visible.length === 0 ? (
               <div className="sv-empty">
-                <p>Không có nhóm nào khớp bộ lọc.</p>
+                <p>{keyword ? `Không tìm thấy nhóm nào có tên chứa "${search.trim()}".` : 'Không có nhóm nào khớp bộ lọc.'}</p>
               </div>
             ) : view === 'table' ? (
               <div className="sv-table-wrap">
@@ -292,7 +354,17 @@ export default function SupervisorDashboard() {
                     {visible.map((g) => (
                       <tr key={g.id} className="sv-row" onClick={() => openGroup(g.id)}>
                         <td className="sv-td">
-                          <div className="sv-cell-name">{g.name}</div>
+                          <div className="sv-cell-name">
+                            {/* MỚI THÊM (GV6): nút ghim, sáng lên khi đã ghim */}
+                            <button
+                              className={`pn-pin ${g.pinned ? 'pn-pin-on' : ''}`}
+                              onClick={(e) => handleTogglePin(e, g)}
+                              title={g.pinned ? 'Bỏ ghim' : 'Ghim nhóm lên đầu'}
+                            >
+                              {g.pinned ? '★' : '☆'}
+                            </button>
+                            {g.name}
+                          </div>
                           <p className="sv-cell-sub">{g.doneTasks}/{g.totalTasks} việc xong</p>
                         </td>
                         <td className="sv-td"><Progress value={g.progress} /></td>
@@ -308,6 +380,9 @@ export default function SupervisorDashboard() {
                         <td className="sv-td">
                           <div className="ct-actions">
                             <button className="ct-btn" onClick={(e) => openContribution(e, g)}>Đóng góp</button>
+                            {/* MỚI THÊM (GV9): mở trang biểu đồ; dùng chung kiểu nút ct-btn cho đồng bộ giao diện */}
+                            <button className="ct-btn" onClick={(e) => openCharts(e, g)}>Biểu đồ</button>
+                            <button className="ev-btn-open" onClick={(e) => openEvaluation(e, g)}>Đánh giá</button>
                             <button className="rm-btn" onClick={(e) => openRemind(e, g)}>Nhắc nhóm</button>
                           </div>
                         </td>
@@ -321,7 +396,16 @@ export default function SupervisorDashboard() {
                 {visible.map((g) => (
                   <div key={g.id} className="sv-card" onClick={() => openGroup(g.id)}>
                     <div className="sv-card-top">
-                      <h3 className="sv-card-name">{g.name}</h3>
+                      <h3 className="sv-card-name">
+                        <button
+                          className={`pn-pin ${g.pinned ? 'pn-pin-on' : ''}`}
+                          onClick={(e) => handleTogglePin(e, g)}
+                          title={g.pinned ? 'Bỏ ghim' : 'Ghim nhóm lên đầu'}
+                        >
+                          {g.pinned ? '★' : '☆'}
+                        </button>
+                        {g.name}
+                      </h3>
                       <StatusBadge status={g.status} />
                     </div>
                     <p className="sv-card-desc">{g.description || 'Chưa có mô tả'}</p>
@@ -333,6 +417,9 @@ export default function SupervisorDashboard() {
                     <p className="sv-card-time">Hoạt động: {activityText(g)}</p>
                     <div className="ct-actions ct-actions-card">
                       <button className="ct-btn" onClick={(e) => openContribution(e, g)}>Đóng góp</button>
+                      {/* MỚI THÊM (GV9): mở trang biểu đồ */}
+                      <button className="ct-btn" onClick={(e) => openCharts(e, g)}>Biểu đồ</button>
+                      <button className="ev-btn-open" onClick={(e) => openEvaluation(e, g)}>Đánh giá</button>
                       <button className="rm-btn" onClick={(e) => openRemind(e, g)}>Nhắc nhóm</button>
                     </div>
                   </div>
@@ -348,6 +435,9 @@ export default function SupervisorDashboard() {
 
       {/* MỚI THÊM (tính năng 3): hộp thoại bảng đóng góp, chỉ hiện khi đã chọn 1 nhóm */}
       {contribGroup && <ContributionModal group={contribGroup} onClose={() => setContribGroup(null)} />}
+
+      {/* MỚI THÊM (GV7): hộp thoại đánh giá theo mốc, chỉ hiện khi đã chọn 1 nhóm */}
+      {evalGroup && <EvaluationModal group={evalGroup} onClose={() => setEvalGroup(null)} />}
     </div>
   );
 }

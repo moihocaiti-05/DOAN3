@@ -1,0 +1,58 @@
+/* Dòng hoạt động bấm được + dòng báo "không mở được" + thanh mốc thời gian ở tab Hoạt động (CSS riêng, khớp tên với tính năng)
+   Dùng var(--color-*) có màu dự phòng để khớp mọi theme */
+.activity-item-clickable {
+  cursor: pointer;
+  border-radius: 10px;
+  transition: background 0.15s ease;
+}
+
+.activity-item-clickable:hover {
+  background: color-mix(in srgb, var(--color-text, #e5e7eb) 6%, transparent);
+}
+
+/* Dùng phím Tab để chọn dòng thì hiện viền màu nhấn */
+.activity-item-clickable:focus-visible {
+  outline: none;
+  background: color-mix(in srgb, var(--color-text, #e5e7eb) 6%, transparent);
+  box-shadow: 0 0 0 2px var(--color-primary, #fc636b);
+}
+
+/* Dòng báo khi không mở được (VD công việc đã bị xóa) */
+.activity-notice {
+  margin: 0 0 12px;
+  padding: 9px 14px;
+  border-radius: 10px;
+  border: 1px solid var(--color-warning, #f59e0b);
+  background: color-mix(in srgb, var(--color-warning, #f59e0b) 14%, transparent);
+  color: var(--color-text, #e5e7eb);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+/* MỚI THÊM: thanh chọn mốc thời gian (Hôm nay | Hôm qua | 7 ngày qua | Chọn ngày... | Tất cả).
+   Các nút dùng lại class activity-filter-btn có sẵn nên giống bộ lọc loại việc; ở đây chỉ lo bố cục + ô chọn ngày */
+.activity-range-bar {
+  display: flex;
+  flex-wrap: wrap; /* màn hình hẹp thì ô chọn ngày xuống dòng */
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 10px;
+}
+
+/* Ô lịch chọn ngày (hiện khi bấm "Chọn ngày...") */
+.activity-date-input {
+  padding: 6px 10px;
+  border-radius: 10px;
+  border: 1px solid color-mix(in srgb, var(--color-text, #e5e7eb) 25%, transparent);
+  background: transparent;
+  color: var(--color-text, #e5e7eb);
+  font: inherit;
+  font-size: 13px;
+  color-scheme: light dark; /* để biểu tượng lịch hiện rõ cả ở nền sáng lẫn nền tối */
+  cursor: pointer;
+}
+
+.activity-date-input:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--color-primary, #fc636b);
+}

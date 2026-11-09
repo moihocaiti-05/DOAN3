@@ -104,14 +104,17 @@ exports.deleteGroup = async (req, res, next) => {
   }
 };
 
-// MỚI THÊM: Xử lý route GET /groups/:groupId/activities - lấy 1 trang lịch sử hoạt động (?page=1&limit=20)
+// MỚI THÊM: Xử lý route GET /groups/:groupId/activities - lấy 1 trang lịch sử hoạt động
+// (?page=1&limit=20&range=today|yesterday|7days|date|all&date=2026-10-01)
 exports.getActivities = async (req, res, next) => {
   try {
     const result = await activityService.getGroupActivities(
       req.params.groupId,
       req.user.id,
       req.query.page,
-      req.query.limit
+      req.query.limit,
+      req.query.range, // MỚI THÊM: mốc thời gian muốn xem (không gửi thì hiểu là "all")
+      req.query.date // MỚI THÊM: ngày cụ thể, chỉ dùng khi range = "date"
     );
     res.json({ success: true, data: result });
   } catch (error) {
@@ -136,6 +139,16 @@ exports.exportReport = async (req, res, next) => {
     // Ghi thẳng workbook vào response (không lưu file tạm trên ổ đĩa) rồi kết thúc response
     await workbook.xlsx.write(res);
     res.end();
+  } catch (error) {
+    next(error);
+  }
+};
+
+// MỚI THÊM (Phiên 17): Xử lý route DELETE /groups/:groupId/work-data - xóa toàn bộ dữ liệu công việc của nhóm
+exports.clearWorkData = async (req, res, next) => {
+  try {
+    await groupService.clearWorkData(req.params.groupId, req.user.id, req.body.confirmName);
+    res.json({ success: true });
   } catch (error) {
     next(error);
   }

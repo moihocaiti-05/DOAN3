@@ -1,62 +1,316 @@
-/* Tab "Hoạt động" của nhóm - dùng biến màu chung trong theme.css (đổi theo theme Sáng/Tối/Ấm/Xanh) */
+/* Tab "Hoạt động" của nhóm - dùng biến màu chung trong theme.css (đổi theo theme Sáng/Tối/Ấm/Xanh)
+   MỚI SỬA: kiểu DÒNG THỜI GIAN - mỗi hoạt động là 1 thẻ bo góc, có đường kẻ dọc nối các avatar,
+   nhóm theo ngày, avatar + biểu tượng loại hành động, nhãn trạng thái màu, khối lý do từ chối.
+   Màu mang ý nghĩa (xanh lá = xong, cam = làm lại / từ chối, tím = kiểm định...) giữ cố định ở mọi theme, giống màu độ ưu tiên ở kanban.css.
+   Muốn đổi màu một loại: sửa các biến --act-* ngay bên dưới.
+   Muốn đổi độ rộng cột: sửa max-width. Muốn đổi cỡ avatar: sửa --act-avatar (đường kẻ dọc tự canh theo). */
 .activity-feed {
-  max-width: 760px;
+  --act-success: #16a34a;
+  --act-warning: #f97316;
+  --act-review: #8b5cf6;
+  --act-info: #3b82f6;
+  --act-danger: #ef4444;
+
+  /* MỚI THÊM: các thông số bố cục dùng chung để đường kẻ dọc luôn thẳng với tâm avatar */
+  --act-avatar: 44px; /* cỡ avatar */
+  --act-pad-x: 16px; /* khoảng đệm trái / phải trong thẻ */
+
+  max-width: 920px; /* MỚI SỬA: 760px -> 920px cho đỡ trống hai bên */
   margin: 0 auto;
-  /* MỚI SỬA: đặt màu chữ cho cả khung bằng biến theme - tiêu đề và nội dung bên trong tự thừa hưởng, đúng ở mọi theme */
   color: var(--color-text);
 }
 
+/* ----- Đầu trang ----- */
 .activity-feed-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 12px;
+  margin-bottom: 16px;
 }
 
 .activity-feed-title {
   margin: 0;
-  font-size: 18px;
-  color: var(--color-text); /* MỚI THÊM: tiêu đề "Hoạt động gần đây" rõ chữ ở mọi theme */
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--color-text);
 }
 
+.activity-feed-sub {
+  margin: 3px 0 0;
+  font-size: 12.5px;
+  color: var(--color-text-muted);
+}
+
+/* ----- Thanh lọc ----- */
+.activity-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.activity-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.activity-filter-btn {
+  padding: 7px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: 'Inter', sans-serif;
+  color: var(--color-text-secondary);
+  background: var(--color-surface-subtle-2);
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  cursor: pointer;
+  transition: color 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+}
+
+.activity-filter-btn:hover {
+  color: var(--color-accent);
+  border-color: var(--color-accent);
+}
+
+.activity-filter-btn-active,
+.activity-filter-btn-active:hover {
+  color: #ffffff;
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+}
+
+.activity-actor-select {
+  padding: 7px 12px;
+  font-size: 13px;
+  font-family: 'Inter', sans-serif;
+  color: var(--color-text);
+  background: var(--color-surface);
+  border: 1.5px solid var(--color-border);
+  border-radius: 8px;
+  outline: none;
+}
+
+/* ----- Nhóm theo ngày ----- */
+.activity-day {
+  margin-top: 22px;
+}
+
+/* MỚI SỬA: tiêu đề ngày có chấm tròn nhỏ phía trước, làm "mốc" của dòng thời gian */
+.activity-day-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 12px;
+  padding-left: 2px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+.activity-day-title::before {
+  content: '';
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--color-accent);
+}
+
+/* MỚI SỬA: danh sách là cột các thẻ rời (không còn 1 khung chung); ::before là đường kẻ dọc nối các avatar */
 .activity-list {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
   list-style: none;
   margin: 0;
   padding: 0;
 }
 
-.activity-item {
-  display: flex;
-  justify-content: space-between;
-  gap: 16px;
-  padding: 10px 0;
-  border-bottom: 1px solid var(--color-border); /* MỚI SỬA: dùng đúng tên biến viền của theme */
-  line-height: 1.45;
-  color: var(--color-text); /* MỚI THÊM: nội dung từng dòng hoạt động rõ chữ */
+.activity-list::before {
+  content: '';
+  position: absolute;
+  top: 14px;
+  bottom: 14px;
+  /* tâm avatar = khoảng đệm trái của thẻ + nửa cỡ avatar, trừ nửa bề rộng đường kẻ (2px) */
+  left: calc(var(--act-pad-x) + var(--act-avatar) / 2 - 1px);
+  width: 2px;
+  background: var(--color-border);
+  border-radius: 2px;
 }
 
+/* ----- Mỗi hoạt động = 1 thẻ ----- */
+.activity-item {
+  position: relative; /* nằm trên đường kẻ dọc (thẻ có nền nên che đường kẻ, chỉ thấy đường ở khoảng hở giữa các thẻ) */
+  z-index: 1;
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 14px var(--act-pad-x);
+  line-height: 1.5;
+  color: var(--color-text);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+/* MỚI THÊM: thẻ có lý do từ chối (có khối ghi chú bên trong) được viền cam bên trái cho nổi bật */
+.activity-item:has(.activity-note) {
+  border-left: 3px solid var(--act-warning);
+}
+
+/* MỚI THÊM: chỉ thẻ bấm được mới đổi viền khi rê chuột (class này do activity-link.css đặt cho dòng bấm được) */
+.activity-item-clickable:hover {
+  border-color: var(--color-accent);
+}
+
+/* ----- Avatar + biểu tượng loại hành động (góc dưới phải avatar) ----- */
+.activity-avatar {
+  position: relative;
+  width: var(--act-avatar);
+  height: var(--act-avatar);
+  flex-shrink: 0;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.activity-kind {
+  position: absolute;
+  right: -5px;
+  bottom: -5px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  line-height: 1;
+  border: 2px solid var(--color-surface);
+  background: var(--color-surface-subtle-2);
+}
+
+.activity-tone-success { background: color-mix(in srgb, var(--act-success) 28%, var(--color-surface)); }
+.activity-tone-warning { background: color-mix(in srgb, var(--act-warning) 28%, var(--color-surface)); }
+.activity-tone-review  { background: color-mix(in srgb, var(--act-review) 28%, var(--color-surface)); }
+.activity-tone-info    { background: color-mix(in srgb, var(--act-info) 28%, var(--color-surface)); }
+.activity-tone-danger  { background: color-mix(in srgb, var(--act-danger) 28%, var(--color-surface)); }
+
+/* ----- Nội dung ----- */
+.activity-body {
+  flex: 1;
+  min-width: 0;
+  padding-top: 2px; /* canh dòng chữ đầu ngang giữa avatar cho đẹp */
+}
+
+.activity-text {
+  margin: 0;
+  font-size: 14.5px;
+  color: var(--color-text);
+  overflow-wrap: anywhere;
+}
+
+/* Tên công việc / mốc nằm trong dấu "..." */
+.activity-chip {
+  display: inline-block;
+  margin: 0 2px;
+  padding: 1px 9px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text);
+  background: var(--color-surface-subtle-2);
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+}
+
+/* Nhãn trạng thái: từ [A] → [B] */
+.activity-status {
+  display: inline-block;
+  padding: 1px 10px;
+  font-size: 12px;
+  font-weight: 700;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.activity-status-todo   { color: var(--color-text-secondary); background: var(--color-surface-subtle-2); }
+.activity-status-doing  { color: var(--act-info);    background: color-mix(in srgb, var(--act-info) 14%, transparent); }
+.activity-status-redo   { color: var(--act-warning); background: color-mix(in srgb, var(--act-warning) 16%, transparent); }
+.activity-status-review { color: var(--act-review);  background: color-mix(in srgb, var(--act-review) 14%, transparent); }
+.activity-status-done   { color: var(--act-success); background: color-mix(in srgb, var(--act-success) 15%, transparent); }
+
+.activity-arrow {
+  margin: 0 5px;
+  color: var(--color-text-muted);
+}
+
+/* "×3" khi nhiều dòng giống hệt nhau liền nhau được gộp lại */
+.activity-count {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 0 7px;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--color-text-secondary);
+  background: var(--color-surface-subtle-2);
+  border-radius: 999px;
+}
+
+/* Lý do từ chối */
+.activity-note {
+  margin: 10px 0 0;
+  padding: 8px 12px;
+  font-size: 13px;
+  font-style: italic;
+  color: var(--color-text-secondary);
+  background: color-mix(in srgb, var(--act-warning) 9%, transparent);
+  border-left: 3px solid var(--act-warning);
+  border-radius: 0 6px 6px 0;
+}
+
+/* MỚI SỬA: giờ là 1 viên nhỏ bo tròn, nằm cùng hàng với dòng chữ đầu */
 .activity-time {
   flex-shrink: 0;
-  font-size: 13px;
-  color: var(--color-text-secondary); /* MỚI SỬA: dùng đúng tên biến chữ phụ của theme */
+  margin-top: 2px;
+  padding: 2px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  background: var(--color-surface-subtle);
+  border-radius: 999px;
+  white-space: nowrap;
 }
 
+/* ----- Trạng thái trống / lỗi / xem thêm ----- */
 .activity-feed-empty {
-  color: var(--color-text-secondary); /* MỚI SỬA: dùng đúng tên biến chữ phụ của theme */
+  color: var(--color-text-secondary);
 }
 
 .activity-feed-error {
-  color: var(--color-danger); /* biến này đã đúng tên từ trước */
+  color: var(--color-danger);
 }
 
 .activity-more {
-  margin: 16px auto 0;
+  margin: 20px auto 0;
   display: block;
 }
 
 @media (max-width: 600px) {
   .activity-item {
-    flex-direction: column;
-    gap: 4px;
+    flex-wrap: wrap;
+  }
+
+  .activity-time {
+    margin-left: calc(var(--act-avatar) + 14px); /* thẳng hàng với phần nội dung (cỡ avatar + khoảng cách giữa avatar và chữ) */
   }
 }

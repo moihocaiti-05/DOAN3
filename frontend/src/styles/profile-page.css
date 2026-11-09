@@ -68,9 +68,8 @@
 .pf-hero-body {
   display: flex;
   flex-wrap: wrap;
-  align-items: flex-end;
+  align-items: flex-start;
   gap: 16px 24px;
-  margin-top: -44px; /* kéo ảnh đại diện đè lên dải màu phía trên */
   padding: 0 24px 22px;
 }
 
@@ -79,6 +78,7 @@
   flex: none;
   width: 96px;
   height: 96px;
+  margin-top: -44px; /* chỉ kéo ảnh đại diện đè lên dải màu phía trên */
 }
 
 .pf-avatar {
@@ -127,7 +127,7 @@
 .pf-hero-info {
   flex: 1;
   min-width: 200px;
-  padding-bottom: 4px;
+  padding-top: 16px;
 }
 
 .pf-hero-name {
@@ -171,6 +171,7 @@
 .pf-stats {
   display: flex;
   gap: 12px;
+  margin-top: 16px;
 }
 
 .pf-stat {
@@ -200,7 +201,7 @@
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   gap: 20px;
-  align-items: start;
+  align-items: stretch;
   margin-bottom: 20px;
 }
 
@@ -209,6 +210,10 @@
   flex-direction: column;
   gap: 20px;
   min-width: 0;
+}
+
+.pf-col > .pf-card:last-child {
+  flex: 1;
 }
 
 @media (max-width: 860px) {

@@ -126,3 +126,20 @@ exports.getAcceptedSupervisors = (groupId) =>
   prisma.groupSupervisor.findMany({
     where: { groupId, status: 'ACCEPTED' },
   });
+
+  // MỚI THÊM (Phiên 17): Xóa TOÀN BỘ dữ liệu CÔNG VIỆC của 1 nhóm để làm lại từ trống (VD để import file Excel mới)
+// Xóa: bình luận, file đính kèm (bản ghi), công việc (cả việc con), mốc, nhãn, và thông báo cũ liên quan tới công việc
+// GIỮ NGUYÊN: thành viên, Giảng viên, lời mời, chat, lịch sử hoạt động, nhóm
+// Dùng $transaction: lỗi giữa chừng thì rollback hết, không để dữ liệu xóa dở
+exports.clearWorkDataCascade = (groupId) =>
+  prisma.$transaction([
+    prisma.comment.deleteMany({ where: { OR: [{ task: { groupId } }, { milestone: { groupId } }] } }),
+    prisma.attachment.deleteMany({ where: { task: { groupId } } }),
+    prisma.task.deleteMany({ where: { groupId } }),     // việc con cũng bị xóa theo vì cùng groupId
+    prisma.milestone.deleteMany({ where: { groupId } }), // cả cây mốc (gốc lẫn con)
+    prisma.tag.deleteMany({ where: { groupId } }),       // liên kết nhãn - việc tự mất theo
+    // Chỉ dọn 2 loại thông báo trỏ tới công việc; KHÔNG đụng lời mời, chuyển quyền, nhắc nhóm của Giảng viên
+    prisma.notification.deleteMany({
+      where: { groupId, type: { in: ['task_assigned', 'deadline_reminder'] } },
+    }),
+  ]);

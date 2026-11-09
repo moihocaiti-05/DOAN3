@@ -1,5 +1,6 @@
 const jwt = require('jsonwebtoken'); // MỚI THÊM: để kiểm tra token đăng nhập ngay lúc kết nối socket
 const messageService = require('../services/message.service');
+const presence = require('./presence'); // MỚI THÊM: ghi nhớ ai đang mở trang của nhóm nào (để hiện chấm xanh "đang online")
 
 // File này chứa toàn bộ logic xử lý sự kiện Socket.io liên quan đến chat và thông báo
 // "io" là đối tượng Socket.io server chính, được truyền từ server.js vào
@@ -34,6 +35,18 @@ module.exports = (io) => {
     // (nhờ vậy khi mạng rớt rồi nối lại, phòng thông báo cũng tự có lại)
     socket.join(`notification_${userId}`);
 
+    // MỚI THÊM: các nhóm mà KẾT NỐI này đang ở trong (để khi ngắt kết nối biết phải báo "rời" những nhóm nào)
+    const joinedGroups = new Set();
+
+    // MỚI THÊM: báo cho mọi người trong phòng nhóm danh sách người đang online (sự kiện "presence_update")
+    // Dùng phòng "groupId" - chính là phòng chat đã có, nên chỉ thành viên / Giảng viên đã đồng ý mới nhận được
+    const broadcastPresence = (groupId) => {
+      io.to(groupId).emit('presence_update', {
+        groupId,
+        onlineUserIds: presence.getOnlineUserIds(groupId),
+      });
+    };
+
     // MỚI SỬA: "join_group" - chỉ cho vào phòng chat của nhóm nếu người này được chat trong nhóm
     // (thành viên đã đồng ý HOẶC Giảng viên đã đồng ý, dùng lại assertCanChat). Người ngoài nhóm không nghe được tin realtime
     // Room trong Socket.io giống như 1 kênh riêng, chỉ ai trong phòng mới nhận được tin nhắn phòng đó
@@ -43,6 +56,11 @@ module.exports = (io) => {
         await messageService.assertCanChat(userId, groupId);
         socket.join(groupId);
         console.log(`Socket ${socket.id} joined group ${groupId}`);
+
+        // MỚI THÊM: ghi nhận người này đang online trong nhóm rồi báo cho cả phòng (kể cả chính người vừa vào)
+        joinedGroups.add(groupId);
+        presence.add(groupId, userId, socket.id);
+        broadcastPresence(groupId);
       } catch (error) {
         // Báo riêng cho người xin vào, không ảnh hưởng ai khác
         socket.emit('join_error', { message: error.message });
@@ -51,7 +69,15 @@ module.exports = (io) => {
 
     // Sự kiện "leave_group": khi user rời khỏi trang nhóm (chuyển trang khác)
     socket.on('leave_group', (groupId) => {
-      if (typeof groupId === 'string') socket.leave(groupId);
+      if (typeof groupId === 'string') {
+        socket.leave(groupId);
+        // MỚI THÊM: bỏ khỏi danh sách online rồi báo cho những người còn lại
+        if (joinedGroups.has(groupId)) {
+          joinedGroups.delete(groupId);
+          presence.remove(groupId, userId, socket.id);
+          broadcastPresence(groupId);
+        }
+      }
     });
 
     // MỚI SỬA: không còn xử lý "join_notifications" - việc vào phòng thông báo đã tự làm ở lúc kết nối (phía trên)
@@ -82,6 +108,13 @@ module.exports = (io) => {
 
     socket.on('disconnect', () => {
       console.log('Client disconnected:', socket.id);
+
+      // MỚI THÊM: đóng tab / mất mạng thì coi như rời mọi nhóm đang ở, và báo cho những người còn lại
+      joinedGroups.forEach((groupId) => {
+        presence.remove(groupId, userId, socket.id);
+        broadcastPresence(groupId);
+      });
+      joinedGroups.clear();
     });
   });
 };

@@ -1,0 +1,195 @@
+/* ===== MỚI THÊM: tên mốc to và đậm, nhỏ dần theo từng cấp (áp dụng cho MỌI cấp, không giới hạn) =====
+   MUỐN CHỈNH CỠ CHỮ / KHOẢNG CÁCH: chỉ sửa các con số trong 5 khối "cấp" ngay bên dưới, phần quy tắc cuối file không cần đụng.
+   Mỗi khối có 4 số: --zt-size = cỡ chữ, --zt-weight = độ đậm (400 đến 800),
+   --zt-top = khoảng cách phía trên tên mốc, --zt-bottom = khoảng cách phía dưới tên mốc.
+   Cấp 5 được dùng chung cho cả cấp 6, 7... (mốc càng sâu càng không đổi nữa). */
+
+/* Cấp 1: Giai đoạn (mốc lớn, cũng áp cho vùng "Không thuộc mốc nào") */
+.kanban-zone-list {
+  --zt-size: 30px;
+  --zt-weight: 800;
+  --zt-top: 0px;
+  --zt-bottom: 18px;
+}
+
+/* Cấp 2: mốc con (Backend, Frontend...) */
+.kanban-zone-children {
+  --zt-size: 24px;
+  --zt-weight: 800;
+  --zt-top: 24px;
+  --zt-bottom: 14px;
+}
+
+/* Cấp 3 */
+.kanban-zone-children .kanban-zone-children {
+  --zt-size: 20px;
+  --zt-weight: 700;
+  --zt-top: 18px;
+  --zt-bottom: 12px;
+}
+
+/* Cấp 4 */
+.kanban-zone-children .kanban-zone-children .kanban-zone-children {
+  --zt-size: 17px;
+  --zt-weight: 700;
+  --zt-top: 14px;
+  --zt-bottom: 10px;
+}
+
+/* Cấp 5 trở xuống */
+.kanban-zone-children .kanban-zone-children .kanban-zone-children .kanban-zone-children {
+  --zt-size: 15px;
+  --zt-weight: 700;
+  --zt-top: 14px;
+  --zt-bottom: 10px;
+}
+
+/* ----- Quy tắc áp dụng (không cần sửa) ----- */
+/* Chỉ nhắm vào tiêu đề nằm TRONG .kanban-zone-header nên dòng "Chưa có việc nào ở mốc này" không bị ảnh hưởng */
+.kanban-zone-list .kanban-zone-header {
+  margin-top: var(--zt-top);
+  margin-bottom: var(--zt-bottom);
+}
+
+.kanban-zone-list .kanban-zone-header .kanban-zone-title {
+  font-size: var(--zt-size);
+  font-weight: var(--zt-weight);
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+  color: var(--color-text);
+}
+
+/* ===== MỚI THÊM: dây nối cho thấy mốc nào thuộc mốc nào (kiểu sơ đồ cây) =====
+   Mỗi mốc con có 1 nhánh ngang nối vào tên mốc, và 1 đường dọc nối từ mốc cha xuống;
+   mốc con CUỐI CÙNG thì đường dọc dừng ngay tại nhánh của nó (hình chữ L), không kéo dài thừa.
+   MỚI SỬA: dây to và rõ hơn (dày 2px -> 4px, màu đậm hơn, nhánh ngang dài hơn, đầu dây bo tròn).
+   Đổi màu dây: sửa --zt-line (số % càng cao thì dây càng đậm).
+   Đổi độ dày: sửa --zt-line-width.
+   Đổi độ dài nhánh ngang: sửa --zt-branch (nên giữ nhỏ hơn 20px để dây không chạm vào chữ). */
+.kanban-zone-list {
+  --zt-line: color-mix(in srgb, var(--color-text-muted) 50%, transparent); /* MỚI SỬA: 85% -> 50% cho nhạt hơn, đỡ đen */
+  --zt-line-width: 2px; /* MỚI SỬA: 4px -> 2px cho mỏng lại (muốn dày hơn thì sửa số này) */
+  --zt-branch: 17px; /* MỚI THÊM: độ dài nhánh ngang (trước đây cố định 14px) */
+}
+
+/* (Đường kẻ dọc cũ border-left đã được xóa thẳng trong kanban.css, dây mới do từng mốc con tự vẽ) */
+
+.kanban-zone-list .kanban-zone-children > .kanban-zone-node {
+  position: relative;
+  display: flow-root; /* khoảng cách phía trên tên mốc nằm TRONG khung mốc, để dây nối tính đúng vị trí */
+  margin-bottom: 0;
+}
+
+/* Nhánh ngang: từ đường dọc đến sát tên mốc, nằm giữa dòng tên */
+.kanban-zone-list .kanban-zone-children > .kanban-zone-node::before {
+  content: '';
+  position: absolute;
+  left: -20px;
+  top: calc(var(--zt-top) + var(--zt-size) * 0.6 - var(--zt-line-width) / 2);
+  width: var(--zt-branch); /* MỚI SỬA: dùng biến thay cho số 14px cố định */
+  height: var(--zt-line-width);
+  background: var(--zt-line);
+  border-radius: 0 var(--zt-line-width) var(--zt-line-width) 0; /* MỚI THÊM: đầu nhánh bo tròn */
+}
+
+/* Đường dọc: chạy suốt chiều cao mốc con (kể cả các mốc cháu bên trong) để nối tới mốc con kế tiếp */
+.kanban-zone-list .kanban-zone-children > .kanban-zone-node::after {
+  content: '';
+  position: absolute;
+  left: -20px;
+  top: 0;
+  bottom: 0;
+  width: var(--zt-line-width);
+  background: var(--zt-line);
+}
+
+/* Mốc con đầu tiên: kéo đường dọc lên sát mốc cha (bù khoảng đệm phía trên 20px của khung mốc con) */
+.kanban-zone-list .kanban-zone-children > .kanban-zone-node:first-child::after {
+  top: -20px;
+}
+
+/* Mốc con cuối cùng: đường dọc dừng ngay tại nhánh ngang (hình chữ L) */
+.kanban-zone-list .kanban-zone-children > .kanban-zone-node:last-child::after {
+  bottom: auto;
+  height: calc(var(--zt-top) + var(--zt-size) * 0.6 + var(--zt-line-width) / 2);
+}
+
+/* Chỉ có 1 mốc con: vừa đầu vừa cuối, đường dọc đi từ mốc cha tới nhánh ngang */
+.kanban-zone-list .kanban-zone-children > .kanban-zone-node:first-child:last-child::after {
+  top: -20px;
+  height: calc(20px + var(--zt-top) + var(--zt-size) * 0.6 + var(--zt-line-width) / 2);
+}
+
+/* ===== MỚI THÊM: dây nối các mốc LỚN (cấp 1, Giai đoạn) với nhau, cùng một "trục" dọc bên trái =====
+   Trước đây chỉ mốc con mới có dây, các mốc lớn đứng rời nhau. Giờ các mốc lớn nằm cùng cấp
+   (kể cả vùng "Không thuộc mốc nào" ở cuối danh sách) được nối bằng 1 đường dọc bên trái,
+   mỗi mốc có 1 nhánh ngang chạm vào tên mốc, mốc cuối cùng thì dây dừng ở nhánh (hình chữ L).
+   Chỉ có 1 mốc lớn duy nhất thì KHÔNG vẽ dây (không có gì để nối).
+   MUỐN CHỈNH: --zt-top-gap = bề rộng chừa bên trái cho trục (px); --zt-top-space = khoảng cách giữa 2 mốc lớn liền nhau.
+   Màu và độ dày dùng chung --zt-line và --zt-line-width ở trên. */
+.kanban-zone-list {
+  --zt-top-gap: 28px;
+  --zt-top-space: 36px;
+  padding-left: var(--zt-top-gap); /* chừa chỗ bên trái để vẽ trục dọc */
+}
+
+/* Mỗi mốc lớn (và vùng "Không thuộc mốc nào") tự giữ khoảng cách bằng padding, để trục dọc không bị đứt giữa 2 mốc
+   (kanban.css đã được sửa: gap của .kanban-zone-list = 0 và bỏ margin của mốc, nên khoảng cách chỉ còn do khối này quyết định) */
+.kanban-zone-list > .kanban-zone-node,
+.kanban-zone-list > .kanban-zone {
+  position: relative;
+  display: flow-root;
+  margin-bottom: 0;
+  padding-bottom: var(--zt-top-space);
+}
+
+.kanban-zone-list > .kanban-zone-node:last-child,
+.kanban-zone-list > .kanban-zone:last-child {
+  padding-bottom: 0;
+}
+
+/* Nhánh ngang: từ trục dọc đến sát tên mốc lớn, nằm giữa dòng tên */
+.kanban-zone-list > .kanban-zone-node::before,
+.kanban-zone-list > .kanban-zone::before {
+  content: '';
+  position: absolute;
+  left: calc(var(--zt-top-gap) * -1);
+  top: calc(var(--zt-size) * 0.6 - var(--zt-line-width) / 2);
+  width: calc(var(--zt-top-gap) - 6px);
+  height: var(--zt-line-width);
+  background: var(--zt-line);
+  border-radius: 0 var(--zt-line-width) var(--zt-line-width) 0;
+}
+
+/* Trục dọc: chạy suốt chiều cao mốc lớn, nối sang mốc lớn kế tiếp */
+.kanban-zone-list > .kanban-zone-node::after,
+.kanban-zone-list > .kanban-zone::after {
+  content: '';
+  position: absolute;
+  left: calc(var(--zt-top-gap) * -1);
+  top: 0;
+  bottom: 0;
+  width: var(--zt-line-width);
+  background: var(--zt-line);
+}
+
+/* Mốc lớn đầu tiên: trục bắt đầu từ nhánh ngang của nó (không thò lên phía trên) */
+.kanban-zone-list > .kanban-zone-node:first-child::after,
+.kanban-zone-list > .kanban-zone:first-child::after {
+  top: calc(var(--zt-size) * 0.6 - var(--zt-line-width) / 2);
+}
+
+/* Mốc lớn cuối cùng: trục dừng ngay tại nhánh ngang (hình chữ L) */
+.kanban-zone-list > .kanban-zone-node:last-child::after,
+.kanban-zone-list > .kanban-zone:last-child::after {
+  bottom: auto;
+  height: calc(var(--zt-size) * 0.6 + var(--zt-line-width) / 2);
+}
+
+/* Chỉ có 1 mốc lớn: không vẽ dây */
+.kanban-zone-list > .kanban-zone-node:only-child::before,
+.kanban-zone-list > .kanban-zone-node:only-child::after,
+.kanban-zone-list > .kanban-zone:only-child::before,
+.kanban-zone-list > .kanban-zone:only-child::after {
+  display: none;
+}

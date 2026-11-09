@@ -282,15 +282,12 @@
 .kanban-zone-list {
   display: flex;
   flex-direction: column;
-  gap: 32px;
+  gap: 0; /* MỚI SỬA: 32px -> 0. Khoảng cách giữa các mốc lớn giờ do zone-heading.css giữ (padding trong từng mốc) để dây nối không bị đứt */
 }
 
 .kanban-zone {
-  padding-top: 20px;
-  border-top: 1px solid var(--color-border-light);
-}
-
-.kanban-zone:first-child {
+  /* MỚI SỬA: bỏ đường kẻ ngang + khoảng đệm phía trên (trước đây ngăn vùng "Không thuộc mốc nào" với mốc phía trên),
+     vì giờ các mốc lớn đã được nối bằng dây dọc trong zone-heading.css */
   padding-top: 0;
   border-top: none;
 }
@@ -403,11 +400,11 @@
   margin-left: 28px;
   padding-left: 20px;
   padding-top: 20px;
-  border-left: 2px solid var(--color-border-light);
+  /* MỚI SỬA: bỏ đường kẻ dọc cũ (border-left), dây nối mới do zone-heading.css vẽ */
 }
 
 .kanban-zone-node {
-  margin-bottom: 8px;
+  margin-bottom: 0; /* MỚI SỬA: 8px -> 0, khoảng cách giữa các mốc do zone-heading.css quyết định */
 }
 
 

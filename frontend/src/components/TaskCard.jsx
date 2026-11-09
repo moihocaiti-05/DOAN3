@@ -1,17 +1,9 @@
 import { useDraggable } from '@dnd-kit/core';
 import '../styles/tag.css'; // cần style cho badge nhãn hiển thị trên card
 
-// 1 thẻ task trên Kanban board, có thể kéo-thả (dùng thư viện @dnd-kit)
-// onOpenDetail: hàm được gọi khi bấm vào card (không phải lúc đang kéo) để mở modal chi tiết
-export default function TaskCard({ task, onOpenDetail }) {
-  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
-    id: task.id,
-  });
-
-  const style = transform
-    ? { transform: `translate(${transform.x}px, ${transform.y}px)`, zIndex: 10 }
-    : undefined;
-
+// MỚI SỬA: tách phần "mặt thẻ" ra dùng chung cho 3 nơi: thẻ trên cột Kanban, thẻ trong khung "Xem tất cả",
+// và bản "bóng" (DragOverlay) hiện theo con trỏ khi kéo thẻ từ khung "Xem tất cả" ra ngoài
+function TaskCardFace({ task, innerRef, style, dragging, onClick, extraProps }) {
   const getInitials = (name) => name?.slice(0, 2).toUpperCase() || '??';
 
   // MỚI SỬA: so sánh theo NGÀY (bỏ giờ) để khớp với bộ lọc "Quá hạn" và báo cáo Excel:
@@ -27,22 +19,15 @@ export default function TaskCard({ task, onOpenDetail }) {
     return d.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' });
   };
 
-  const handleClick = () => {
-    if (!isDragging) {
-      onOpenDetail(task);
-    }
-  };
-
   return (
     <div
-      ref={setNodeRef}
+      ref={innerRef}
       style={style}
-      {...listeners}
-      {...attributes}
+      {...extraProps}
       className="task-card"
-      data-dragging={isDragging}
+      data-dragging={dragging}
       data-priority={task.priority}
-      onClick={handleClick}
+      onClick={onClick}
     >
       <div className="task-card-title">{task.title}</div>
       {task.description && <div className="task-card-desc">{task.description}</div>}
@@ -85,5 +70,50 @@ export default function TaskCard({ task, onOpenDetail }) {
         )}
       </div>
     </div>
+  );
+}
+
+// MỚI THÊM: bản "bóng" của thẻ, KanbanZone đặt trong DragOverlay để thẻ kéo từ khung "Xem tất cả" không bị cắt/ẩn
+export function TaskCardOverlay({ task }) {
+  return (
+    <TaskCardFace
+      task={task}
+      dragging={false}
+      style={{ cursor: 'grabbing', boxShadow: '0 10px 28px rgba(0,0,0,0.22)' }}
+    />
+  );
+}
+
+// 1 thẻ task trên Kanban board, có thể kéo-thả (dùng thư viện @dnd-kit)
+// onOpenDetail: hàm được gọi khi bấm vào card (không phải lúc đang kéo) để mở modal chi tiết
+// MỚI THÊM: dragId - chỉ truyền cho thẻ trong khung "Xem tất cả". Thẻ đó cùng task với thẻ trên cột nên PHẢI dùng id kéo-thả khác
+// (tránh trùng id), và id thật của task được gửi kèm trong data để KanbanZone đổi lại cho đúng
+export default function TaskCard({ task, onOpenDetail, dragId }) {
+  const fromModal = dragId != null;
+  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
+    id: dragId ?? task.id,
+    data: { taskId: task.id, fromModal },
+  });
+
+  // Thẻ trong khung "Xem tất cả" đứng yên, thẻ "bóng" ở DragOverlay mới di chuyển theo con trỏ
+  const style = transform && !fromModal
+    ? { transform: `translate(${transform.x}px, ${transform.y}px)`, zIndex: 10 }
+    : undefined;
+
+  const handleClick = () => {
+    if (!isDragging) {
+      onOpenDetail(task);
+    }
+  };
+
+  return (
+    <TaskCardFace
+      task={task}
+      innerRef={setNodeRef}
+      style={style}
+      dragging={isDragging}
+      onClick={handleClick}
+      extraProps={{ ...listeners, ...attributes }}
+    />
   );
 }

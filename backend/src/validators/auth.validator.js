@@ -5,7 +5,7 @@ exports.registerSchema = Joi.object({
   email: Joi.string().email().required(),        // bắt buộc, phải đúng định dạng email
   password: Joi.string().min(6).required(),      // bắt buộc, tối thiểu 6 ký tự
   fullName: Joi.string().min(2).max(100).required(), // bắt buộc, họ tên từ 2-100 ký tự
-  // MỚI THÊM: chọn vai trò lúc đăng ký (Sinh viên hoặc Giảng viên)
+  // chọn vai trò lúc đăng ký (Sinh viên hoặc Giảng viên)
   // .valid(...) chỉ cho phép đúng 2 giá trị này, gửi giá trị khác sẽ bị Joi chặn và báo lỗi
   // .default('SINH_VIEN') nghĩa là nếu Frontend không gửi field role lên thì tự hiểu là Sinh viên
   role: Joi.string().valid('SINH_VIEN', 'GIANG_VIEN').default('SINH_VIEN'),
@@ -17,7 +17,7 @@ exports.loginSchema = Joi.object({
   password: Joi.string().required(), // lúc đăng nhập không cần kiểm tra độ dài, chỉ cần có giá trị
 });
 
-// MỚI THÊM: kiểm tra request xác nhận email (nhập mã 6 số)
+// kiểm tra request xác nhận email (nhập mã 6 số)
 exports.verifyEmailSchema = Joi.object({
   email: Joi.string().email().required(),
   // đúng 6 chữ số: ^ là đầu chuỗi, \d{6} là 6 chữ số, $ là cuối chuỗi
@@ -31,7 +31,15 @@ exports.verifyEmailSchema = Joi.object({
     }),
 });
 
-// MỚI THÊM: kiểm tra request gửi lại mã (chỉ cần email)
+// kiểm tra request gửi lại mã (chỉ cần email)
 exports.resendCodeSchema = Joi.object({
   email: Joi.string().email().required(),
+});
+
+// MỚI THÊM: kiểm tra request đăng nhập bằng Google
+exports.googleSchema = Joi.object({
+  credential: Joi.string().required(), // chuỗi ID token do Google trả về cho Frontend, bắt buộc
+  // vai trò chỉ gửi ở bước 2 (khi email mới và người dùng đã chọn);
+  // KHÔNG đặt .default() ở đây, vì Backend cần biết "chưa gửi role" để hỏi người dùng chọn
+  role: Joi.string().valid('SINH_VIEN', 'GIANG_VIEN'),
 });

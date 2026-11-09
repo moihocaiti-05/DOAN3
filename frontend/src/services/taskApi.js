@@ -15,8 +15,12 @@ export const taskApi = {
   assign: (taskId, assignedTo, groupId) =>
     api.patch(`/tasks/${taskId}/assign`, { assignedTo, groupId }),
 
-  // Tải file mẫu Excel - responseType: 'blob' báo cho axios biết đây là file nhị phân
-  downloadTemplate: () => api.get('/tasks/template', { responseType: 'blob' }),
+  // MỚI SỬA: nhận thêm groupId và gửi lên Backend qua query (?groupId=...)
+  // Backend dùng groupId để đổ email thành viên + mốc của nhóm đó vào các ô menu chọn trong file mẫu
+  // Thiếu groupId thì file mẫu vẫn tải được nhưng các menu Email / Mốc sẽ trống (đây là lỗi trước đây)
+  // responseType: 'blob' báo cho axios biết đây là file nhị phân
+  downloadTemplate: (groupId) =>
+    api.get('/tasks/template', { params: { groupId }, responseType: 'blob' }),
 
   // Upload file Excel để import hàng loạt - FormData là kiểu bắt buộc khi gửi file
   importTasks: (file, groupId) => {
@@ -44,15 +48,15 @@ export const taskApi = {
   // Cập nhật (ghi đè) toàn bộ danh sách nhãn của 1 task - dùng khi sửa nhãn trong TaskDetailModal
   updateTags: (taskId, tagNames) => api.patch(`/tasks/${taskId}/tags`, { tagNames }),
 
-  // MỚI THÊM: Tạo 1 Subtask (task con) bên trong task cha có id = taskId
+  // Tạo 1 Subtask (task con) bên trong task cha có id = taskId
   // data chỉ cần { title, description?, priority?, deadline?, tagNames? } - groupId/milestoneId Backend tự kế thừa từ task cha
   createSubtask: (taskId, data) => api.post(`/tasks/${taskId}/subtasks`, data),
 
-  // MỚI THÊM: Gửi 1 mail GỘP nhiều công việc cho nhiều người trong nhóm
+  // Gửi 1 mail GỘP nhiều công việc cho nhiều người trong nhóm
   // data = { taskIds: [...], recipientIds: [...], message? } - Backend trả { sentCount, failedNames }
   sendMail: (groupId, data) => api.post(`/tasks/group/${groupId}/send-mail`, data),
 
-  // MỚI THÊM (Phiên 12): Trưởng nhóm / Giảng viên duyệt hoặc từ chối việc đang ở "Kiểm định"
+  // (Phiên 12): Trưởng nhóm / Giảng viên duyệt hoặc từ chối việc đang ở "Kiểm định"
   // decision = 'approve' | 'reject'; note bắt buộc khi 'reject'
   review: (taskId, decision, note) => api.patch(`/tasks/${taskId}/review`, { decision, note }),
 };

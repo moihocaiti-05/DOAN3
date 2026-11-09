@@ -62,6 +62,10 @@ router.post('/:groupId/invite-member', authMiddleware, validate(inviteMemberSche
 // Backend tự nhận diện email là Sinh viên hay Giảng viên rồi tự rẽ đúng luồng xử lý tương ứng
 router.post('/:groupId/invite', authMiddleware, validate(inviteMemberSchema), groupController.invite);
 
+// MỚI THÊM (Phiên 17): DELETE /api/groups/:groupId/work-data -> Xóa toàn bộ việc, mốc, nhãn của nhóm để làm lại từ trống
+// Chỉ Trưởng nhóm, phải gõ đúng tên nhóm (confirmName) - Service tự kiểm tra
+router.delete('/:groupId/work-data', authMiddleware, groupController.clearWorkData);
+
 // MỚI THÊM: DELETE /api/groups/:groupId -> Xóa toàn bộ nhóm (chỉ Trưởng nhóm, bắt gõ lại tên nhóm để xác nhận)
 // Không dùng validate(...) Joi riêng - việc kiểm tra confirmName (tên nhóm gõ lại) đã xử lý thẳng trong group.service.js
 router.delete('/:groupId', authMiddleware, groupController.deleteGroup);

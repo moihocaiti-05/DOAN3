@@ -3,13 +3,15 @@ import { createPortal } from 'react-dom';
 import { taskApi } from '../services/taskApi';
 import '../styles/send-mail.css';
 
+
 // Giới hạn mỗi lần gửi - phải khớp với Backend (task.validator.js và taskMail.service.js)
 const MAX_RECIPIENTS = 20; // tối đa 20 người nhận mỗi lần
 const MAX_TASKS_PER_PERSON = 30; // tối đa 30 công việc trong mail của mỗi người
 const MAX_MESSAGE = 500; // độ dài tối đa lời nhắn
 
 const PRIORITY_TEXT = { low: 'Thấp', medium: 'Trung bình', high: 'Cao' };
-const STATUS_TEXT = { todo: 'Chưa làm', doing: 'Đang làm', redo: 'Làm lại', done: 'Hoàn thành' };
+// MỚI SỬA (Phiên 12): thêm review để việc đang ở cột 5 không hiện chữ thô "review" trong danh sách chọn việc
+const STATUS_TEXT = { todo: 'Chưa làm', doing: 'Đang làm', review: 'Kiểm định', redo: 'Làm lại', done: 'Hoàn thành' };
 
 // Đổi "2026-10-20T00:00:00.000Z" thành "20/10/2026" bằng cách cắt chuỗi (không đổi múi giờ nên không bị lệch ngày)
 const formatDeadline = (deadline) => {

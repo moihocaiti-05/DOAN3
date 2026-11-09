@@ -9,10 +9,12 @@ export default function ImportTaskModal({ isOpen, onClose, onImported, groupId }
   const [result, setResult] = useState(null); // lưu kết quả sau khi import (created, errors)
   const [error, setError] = useState('');
 
-  // Xử lý khi bấm "Tải file mẫu" - tải file Excel trống về máy người dùng
+  // Xử lý khi bấm "Tải file mẫu" - tải file Excel về máy người dùng
   const handleDownloadTemplate = async () => {
+    setError('');
     try {
-      const res = await taskApi.downloadTemplate();
+      // MỚI SỬA: truyền groupId để file mẫu có menu chọn email thành viên + mốc của nhóm này
+      const res = await taskApi.downloadTemplate(groupId);
       // Cách tải file trong trình duyệt: tạo 1 link ẩn, tự động bấm vào nó rồi xóa đi
       const url = window.URL.createObjectURL(new Blob([res.data]));
       const link = document.createElement('a');
@@ -21,6 +23,7 @@ export default function ImportTaskModal({ isOpen, onClose, onImported, groupId }
       document.body.appendChild(link);
       link.click();
       link.remove();
+      window.URL.revokeObjectURL(url); // giải phóng bộ nhớ của đường dẫn tạm
     } catch (err) {
       setError('Tải file mẫu thất bại');
     }
@@ -82,23 +85,23 @@ export default function ImportTaskModal({ isOpen, onClose, onImported, groupId }
 
       {/* Hiển thị kết quả sau khi import xong */}
       {result && (
-  <div className="import-result">
-    <p>✅ Đã tạo thành công {result.created} công việc.</p>
-    {result.createdMilestones && result.createdMilestones.length > 0 && (
-      <p>🆕 Đã tự động tạo {result.createdMilestones.length} mốc mới: {result.createdMilestones.join(', ')}</p>
-    )}
-    {result.errors.length > 0 && (
-      <div className="import-errors">
-        <p>⚠ Có {result.errors.length} dòng lỗi:</p>
-        <ul>
-          {result.errors.map((e, i) => (
-            <li key={i}>Dòng {e.row}: {e.error}</li>
-          ))}
-        </ul>
-      </div>
-    )}
-  </div>
-)}
+        <div className="import-result">
+          <p>✅ Đã tạo thành công {result.created} công việc.</p>
+          {result.createdMilestones && result.createdMilestones.length > 0 && (
+            <p>🆕 Đã tự động tạo {result.createdMilestones.length} mốc mới: {result.createdMilestones.join(', ')}</p>
+          )}
+          {result.errors.length > 0 && (
+            <div className="import-errors">
+              <p>⚠ Có {result.errors.length} dòng lỗi:</p>
+              <ul>
+                {result.errors.map((e, i) => (
+                  <li key={i}>Dòng {e.row}: {e.error}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
+      )}
 
       <button
         type="button"

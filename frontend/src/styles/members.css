@@ -243,64 +243,146 @@
   margin-top: 8px;
 }
 
-/* ===== Khu vực "Vùng nguy hiểm" (Xóa nhóm) ===== */
+/* ===== MỚI SỬA: Khu vực "Vùng nguy hiểm" (Xóa dữ liệu công việc + Xóa nhóm) =====
+   Khung ngoài chứa 2 thẻ riêng (.dz-card). Chỉ dùng biến theme nên đẹp ở cả 4 theme */
 .danger-zone {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
   margin-top: 24px;
   padding: 16px;
-  border: 1.5px solid var(--color-accent-soft-border);
-  border-radius: 10px;
-  background: var(--color-accent-soft-bg);
+  border: 1px solid color-mix(in srgb, var(--color-danger, #D14343) 35%, transparent);
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--color-danger, #D14343) 6%, transparent);
 }
 
 .danger-zone-title {
-  font-size: 13px;
+  margin: 0;
+  font-size: 14px;
   font-weight: 700;
-  color: var(--color-danger);
-  margin-bottom: 8px;
-}
-
-.danger-zone-desc {
-  font-size: 12px;
-  color: var(--color-text-secondary);
-  line-height: 1.5;
-  margin: 0 0 12px;
-}
-
-.danger-zone-hint {
-  font-size: 12.5px;
-  color: var(--color-text);
-  margin: 0 0 8px;
-}
-
-.danger-zone-hint strong {
+  letter-spacing: 0.2px;
   color: var(--color-danger);
 }
 
-.danger-zone-input {
-  width: 100%;
-  padding: 9px 12px;
-  font-size: 13px;
-  font-family: 'Inter', sans-serif;
-  border: 1.5px solid var(--color-accent-soft-border);
-  border-radius: 8px;
-  outline: none;
-  box-sizing: border-box;
-  margin-bottom: 12px;
-  transition: border-color 0.15s ease;
+/* Mỗi hành động nguy hiểm là 1 thẻ riêng, nền theo theme */
+.dz-card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px 16px;
   background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+}
+
+/* Thẻ "Xóa nhóm" nặng hơn nên viền đỏ rõ hơn */
+.dz-card-strong {
+  border-color: color-mix(in srgb, var(--color-danger, #D14343) 45%, transparent);
+}
+
+.dz-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.dz-icon {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  font-size: 15px;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--color-danger, #D14343) 14%, transparent);
+}
+
+.dz-title {
+  font-size: 14px;
+  font-weight: 700;
   color: var(--color-text);
 }
 
-.danger-zone-input:focus {
-  border-color: var(--color-danger);
-  box-shadow: 0 0 0 3px rgba(192,57,43,0.12);
+.dz-desc {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--color-text-secondary);
 }
 
-.danger-zone-btn {
+.dz-label {
+  margin: 2px 0 0;
+  font-size: 13px;
+  color: var(--color-text);
+}
+
+.dz-label strong {
+  color: var(--color-danger);
+}
+
+/* Ô gõ lại tên nhóm: sáng viền đỏ khi bấm vào */
+.dz-input {
   width: 100%;
+  box-sizing: border-box;
+  padding: 10px 12px;
+  font-size: 14px;
+  font-family: 'Inter', sans-serif;
+  color: var(--color-text);
+  background: var(--color-surface-subtle);
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
 }
 
-.danger-zone-btn:disabled {
-  opacity: 0.5;
+.dz-input::placeholder {
+  color: var(--color-text-muted);
+}
+
+.dz-input:focus {
+  border-color: var(--color-danger);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-danger, #D14343) 20%, transparent);
+}
+
+/* Nút chung của vùng nguy hiểm */
+.dz-btn {
+  width: 100%;
+  padding: 10px 14px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  border-radius: 10px;
+  transition: background 0.15s, color 0.15s, transform 0.1s, opacity 0.15s;
+}
+
+.dz-btn:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+/* Nút nhẹ (Xóa dữ liệu công việc): chỉ viền đỏ, rê chuột mới đổ nền đỏ */
+.dz-btn-soft {
+  color: var(--color-danger);
+  background: transparent;
+  border: 1px solid var(--color-danger);
+}
+
+.dz-btn-soft:hover:not(:disabled) {
+  color: #FFFFFF;
+  background: var(--color-danger);
+}
+
+/* Nút nặng (Xóa vĩnh viễn nhóm): đỏ đặc */
+.dz-btn-solid {
+  color: #FFFFFF;
+  background: var(--color-danger);
+  border: 1px solid var(--color-danger);
+}
+
+.dz-btn-solid:hover:not(:disabled) {
+  filter: brightness(1.1);
+}
+
+/* Chưa gõ đúng tên thì mờ đi và không bấm được */
+.dz-btn:disabled {
+  opacity: 0.4;
   cursor: not-allowed;
 }

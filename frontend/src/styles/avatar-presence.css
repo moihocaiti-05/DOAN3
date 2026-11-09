@@ -1,0 +1,117 @@
+/* Giao diện "đang online" cho AvatarStack (dùng chung kích thước avatar đã định nghĩa trong members.css)
+   MUỐN ĐỔI MÀU CHẤM: sửa --presence-color. */
+.avatar-stack {
+  --presence-color: #22c55e;
+  --presence-off-color: #9ca3af; /* màu chấm của người đang offline trong hộp danh sách */
+  --presence-supervisor-color: #6366f1; /* màu nhận diện Giảng viên */
+  position: relative; /* để hộp danh sách bám theo dãy avatar */
+}
+
+.avatar-stack-item {
+  position: relative;
+}
+
+/* MỚI SỬA: ĐÃ XÓA quy tắc ".avatar-stack-item-online::after" (chấm xanh ở góc dưới avatar) theo yêu cầu.
+   Ai đang online giờ xem ở chữ "N online" và hộp danh sách khi bấm vào chữ đó. */
+
+/* avatar Giảng viên có màu riêng để phân biệt với sinh viên */
+.avatar-stack-item-supervisor {
+  background: var(--presence-supervisor-color);
+  color: #fff;
+}
+
+/* Dòng chữ "N online" nằm bên phải dãy avatar */
+.avatar-stack-online-count {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-left: 10px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-text-secondary, #9ca3af);
+  white-space: nowrap;
+}
+
+.avatar-stack-online-count::before {
+  content: '';
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--presence-color);
+}
+
+/* chữ "N online" bấm được */
+.avatar-stack-online-btn {
+  cursor: pointer;
+}
+.avatar-stack-online-btn:hover {
+  color: var(--color-text, #e5e7eb);
+}
+
+/* hộp danh sách ai đang online */
+.presence-popover {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 50;
+  min-width: 250px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: var(--color-surface, #1f2328);
+  border: 1px solid var(--color-border, rgba(255, 255, 255, 0.12));
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+  cursor: default;
+}
+
+.presence-popover-title {
+  margin-bottom: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--color-text-secondary, #9ca3af);
+}
+
+.presence-popover-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 0;
+  font-size: 13px;
+  color: var(--color-text, #e5e7eb);
+}
+
+.presence-popover-dot {
+  flex: 0 0 auto;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--presence-off-color);
+}
+.presence-popover-dot-on {
+  background: var(--presence-color);
+}
+
+.presence-popover-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.presence-popover-role {
+  flex: 0 0 auto;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  background: rgba(128, 128, 128, 0.18);
+  color: var(--color-text-secondary, #9ca3af);
+}
+.presence-popover-role-leader {
+  background: rgba(252, 99, 107, 0.18);
+  color: #fc636b;
+}
+.presence-popover-role-supervisor {
+  background: rgba(99, 102, 241, 0.2);
+  color: #818cf8;
+}

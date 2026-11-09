@@ -42,6 +42,7 @@ exports.findOverviewByUser = (userId) =>
   prisma.groupSupervisor.findMany({
     where: { userId, status: 'ACCEPTED' },
     select: {
+      pinned: true, // MỚI THÊM (GV6): Giảng viên này có ghim nhóm hay không
       group: {
         select: {
           id: true,

@@ -1,5 +1,8 @@
-import { DndContext } from '@dnd-kit/core';
+import { useState } from 'react';
+import { DndContext, DragOverlay } from '@dnd-kit/core';
 import KanbanColumn from './KanbanColumn';
+import { TaskCardOverlay } from './TaskCard';
+import '../styles/zone-heading.css'; // MỚI THÊM: tên mốc nổi bật theo cấp (Giai đoạn > mốc con > mốc cấp 3)
 
 const COLUMNS = [
   { id: 'todo', title: 'Danh sách công việc' }, // MỚI SỬA (Phiên 12): đổi tên từ "Chưa làm" (vẫn là trạng thái todo)
@@ -14,7 +17,8 @@ const COLUMNS = [
 // không thể vô tình kéo 1 task từ vùng này sang cột của vùng khác
 // MỚI SỬA: thêm prop allTasks = TOÀN BỘ việc của vùng (không bị lọc) - chỉ dùng để tính % tiến độ,
 // còn tasks (đã lọc) dùng để vẽ thẻ lên các cột. Không truyền allTasks thì dùng tạm tasks như cũ
-export default function KanbanZone({ title, tasks, allTasks, sensors, onDragEnd, onOpenDetail }) {
+// MỚI THÊM: prop hideBoardWhenEmpty - mốc CHA (có mốc con) mà không có việc riêng thì KHÔNG vẽ bảng, chỉ còn tên mốc và % tiến độ
+export default function KanbanZone({ title, tasks, allTasks, sensors, onDragEnd, onOpenDetail, hideBoardWhenEmpty = false }) {
   // Tính % hoàn thành của vùng NGAY TẠI FRONTEND (dựa trên đúng danh sách tasks đang có ở state)
   // để luôn cập nhật tức thì khi kéo-thả đổi trạng thái, không cần gọi lại API tính % từ Backend
 
@@ -27,6 +31,44 @@ export default function KanbanZone({ title, tasks, allTasks, sensors, onDragEnd,
   const percent = total > 0 ? Math.round((done / total) * 100) : 0;
 
   const getTasksByStatus = (status) => tasks.filter((t) => t.status === status);
+
+  // MỚI THÊM: đang lọc/tìm kiếm <=> số việc đã lọc ít hơn toàn bộ việc của vùng -> các cột hiện HẾT kết quả khớp, không cắt còn 5 thẻ
+  const isFiltered = !!allTasks && tasks.length !== allTasks.length;
+
+  // MỚI THÊM: kéo thẻ từ khung "Xem tất cả" - thẻ trong khung có id kéo-thả riêng ("modal-<id>") nên
+  // (1) hiện thẻ "bóng" qua DragOverlay để không bị cắt, (2) đổi lại id THẬT của task trước khi gọi onDragEnd của GroupDetail
+  const [overlayTask, setOverlayTask] = useState(null);
+  const realTaskId = (active) => active.data.current?.taskId ?? active.id;
+
+  // MỚI THÊM: vùng KHÔNG có thẻ nào để hiện (mốc cha chưa có việc riêng, hoặc "Việc của tôi" mà mốc không có việc của mình)
+  // thì thu gọn thành 1 dòng thay cho 5 cột trống; bấm "Mở bảng" nếu vẫn muốn xem. Có việc là bảng tự hiện đầy đủ
+  const [showEmptyBoard, setShowEmptyBoard] = useState(false);
+  const isEmptyZone = tasks.length === 0;
+  const collapsed = isEmptyZone && !showEmptyBoard;
+
+  // Dòng chữ nhỏ dùng class "kanban-zone-title" để ăn đúng màu chữ của giao diện hiện tại (Sáng/Tối/Kem ấm/Xanh dịu)
+  const emptyLineStyle = { display: 'block', margin: '6px 0 0', fontSize: '14px', fontWeight: 400, opacity: 0.75 };
+
+  const linkButtonStyle = {
+    background: 'none',
+    border: 'none',
+    color: 'inherit',
+    cursor: 'pointer',
+    font: 'inherit',
+    textDecoration: 'underline',
+    padding: 0,
+  };
+
+  const handleDragStart = (event) => {
+    if (event.active.data.current?.fromModal) {
+      setOverlayTask(tasks.find((t) => t.id === realTaskId(event.active)) || null);
+    }
+  };
+
+  const handleDragEnd = (event) => {
+    setOverlayTask(null);
+    onDragEnd({ ...event, active: { ...event.active, id: realTaskId(event.active) } });
+  };
 
   return (
     <div className="kanban-zone">
@@ -42,19 +84,50 @@ export default function KanbanZone({ title, tasks, allTasks, sensors, onDragEnd,
         )}
       </div>
 
-      <DndContext sensors={sensors} onDragEnd={onDragEnd}>
-        <div className="kanban-board">
-          {COLUMNS.map((col) => (
-            <KanbanColumn
-              key={col.id}
-              id={col.id}
-              title={col.title}
-              tasks={getTasksByStatus(col.id)}
-              onOpenDetail={onOpenDetail}
-            />
-          ))}
-        </div>
-      </DndContext>
+      {collapsed ? (
+        hideBoardWhenEmpty ? null : (
+          <span className="kanban-zone-title" style={emptyLineStyle}>
+            Chưa có việc nào ở mốc này.{' '}
+            <button type="button" style={linkButtonStyle} onClick={() => setShowEmptyBoard(true)}>
+              Mở bảng
+            </button>
+          </span>
+        )
+      ) : (
+        <>
+          <DndContext
+            sensors={sensors}
+            onDragStart={handleDragStart}
+            onDragEnd={handleDragEnd}
+            onDragCancel={() => setOverlayTask(null)}
+          >
+            <div className="kanban-board">
+              {COLUMNS.map((col) => (
+                <KanbanColumn
+                  key={col.id}
+                  id={col.id}
+                  title={col.title}
+                  tasks={getTasksByStatus(col.id)}
+                  onOpenDetail={onOpenDetail}
+                  showAll={isFiltered}
+                />
+              ))}
+            </div>
+            {/* MỚI THÊM: thẻ "bóng" theo con trỏ khi kéo từ khung "Xem tất cả" (zIndex cao hơn khung); thả xong không chạy hiệu ứng bay về */}
+            <DragOverlay zIndex={2000} dropAnimation={null}>
+              {overlayTask ? <TaskCardOverlay task={overlayTask} /> : null}
+            </DragOverlay>
+          </DndContext>
+          {/* MỚI THÊM: vùng trống đã được mở ra thì có nút thu gọn lại */}
+          {isEmptyZone && (
+            <span className="kanban-zone-title" style={emptyLineStyle}>
+              <button type="button" style={linkButtonStyle} onClick={() => setShowEmptyBoard(false)}>
+                Thu gọn bảng trống
+              </button>
+            </span>
+          )}
+        </>
+      )}
     </div>
   );
 }

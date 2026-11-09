@@ -129,7 +129,7 @@ exports.getSupervisorOverview = async (userId) => {
 
   const today = startOfDay(new Date());
 
-  const groups = rows.map(({ group }) => {
+  const groups = rows.map(({ group, pinned }) => { // MỚI SỬA (GV6): lấy thêm pinned
     const totalTasks = group.tasks.length;
     const doneTasks = group.tasks.filter((t) => t.status === 'done').length;
     const lateTasks = group.tasks.filter(
@@ -160,6 +160,7 @@ exports.getSupervisorOverview = async (userId) => {
       lastActivityAt, // null nếu nhóm chưa có hoạt động nào
       idleDays,
       status,
+      pinned, // MỚI THÊM (GV6): true = nhóm đã được ghim, Frontend đưa lên đầu
     };
   });
 

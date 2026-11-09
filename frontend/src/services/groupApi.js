@@ -40,11 +40,19 @@ export const groupApi = {
   deleteGroup: (groupId, confirmName) =>
     api.delete(`/groups/${groupId}`, { data: { confirmName } }),
 
+  // MỚI THÊM (Phiên 17): Xóa toàn bộ việc, mốc, nhãn của nhóm (giữ thành viên, chat, lịch sử) - cũng phải gõ đúng tên nhóm
+  clearWorkData: (groupId, confirmName) =>
+    api.delete(`/groups/${groupId}/work-data`, { data: { confirmName } }),
+
   // MỚI THÊM: Tải báo cáo tiến độ của nhóm (file Excel)
   // responseType 'blob' để axios nhận dữ liệu dạng file nhị phân thay vì cố đọc như chữ/JSON
   exportReport: (groupId) => api.get(`/groups/${groupId}/report`, { responseType: 'blob' }),
 
   // MỚI THÊM: Lấy 1 trang lịch sử hoạt động của nhóm (mới nhất trước)
-  getActivities: (groupId, page = 1, limit = 20) =>
-    api.get(`/groups/${groupId}/activities`, { params: { page, limit } }),
+  // MỚI SỬA: thêm range ('today' | 'yesterday' | '7days' | 'date' | 'all') và date ("năm-tháng-ngày")
+  // để Backend lọc theo mốc thời gian trong TOÀN BỘ lịch sử. date chỉ được gửi khi range = 'date'
+  getActivities: (groupId, page = 1, limit = 20, range = 'all', date = '') =>
+    api.get(`/groups/${groupId}/activities`, {
+      params: { page, limit, range, ...(range === 'date' && date ? { date } : {}) },
+    }),
 };

@@ -1,0 +1,322 @@
+/* ===== Trang biểu đồ của Giảng viên (GV9) =====
+   Màu nền, viền và chữ dùng các biến theme của dự án (--color-...), nên tự đổi theo giao diện Sáng / Tối / Ấm / Xanh.
+   Chữ của biểu đồ (số trên trục) lấy theo màu chữ của khung bao ngoài (currentColor) nên cũng đổi theo. */
+
+/* MỚI THÊM: nới độ rộng nội dung trang tới 1400px (khung chung sv-content đang hẹp hơn)
+   Viết 2 class liền nhau (.sv-content.ch-content) để chắc chắn thắng khung chung dù file CSS nào nạp trước */
+.sv-content.ch-content {
+  max-width: 1400px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* Hàng đầu trang: nút quay lại, tên nhóm và các nút chọn khoảng thời gian */
+.ch-top {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 8px;
+  color: var(--color-text); /* đặt màu chữ theo theme cho cả hàng này */
+}
+
+.ch-top-spacer {
+  flex: 1; /* đẩy nhóm nút khoảng thời gian về bên phải */
+}
+
+.ch-range-label {
+  font-size: 13px;
+  color: var(--color-text-secondary);
+}
+
+/* MỚI THÊM: dòng nhỏ dưới hàng đầu: hôm nay là ngày nào, ngày kết thúc lấy từ đâu */
+.ch-meta {
+  margin: 0 0 16px;
+  font-size: 13px;
+  color: var(--color-text-secondary);
+}
+
+/* MỚI THÊM: dòng ghi chú nhỏ (tuần chưa kết thúc, giới hạn 52 tuần) */
+.ch-note {
+  margin: 10px 0 0;
+  font-size: 12px;
+  color: var(--color-text-secondary);
+}
+
+/* Hàng thẻ tóm tắt ở đầu trang */
+.ch-kpis {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.ch-kpi {
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  padding: 14px 16px;
+  background: var(--color-surface);
+  color: var(--color-text);
+}
+
+.ch-kpi-label {
+  margin: 0 0 6px;
+  font-size: 12px;
+  color: var(--color-text-secondary);
+}
+
+.ch-kpi-value {
+  margin: 0;
+  font-size: 26px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.ch-kpi-value small {
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--color-text-secondary);
+}
+
+/* Thẻ "Đang trễ hạn" có việc trễ thì đổi sang màu cảnh báo */
+.ch-kpi-danger .ch-kpi-value {
+  color: var(--color-danger);
+}
+
+/* Dòng so sánh với tuần trước, nằm dưới số lớn */
+.ch-delta {
+  margin: 4px 0 0;
+  font-size: 12px;
+}
+
+.ch-delta-up {
+  color: #16a34a;
+}
+
+.ch-delta-down {
+  color: var(--color-danger);
+}
+
+.ch-delta-flat {
+  color: var(--color-text-secondary);
+}
+
+/* Bố cục 2 cột: menu bên trái, biểu đồ bên phải */
+.ch-layout {
+  display: grid;
+  grid-template-columns: 260px 1fr;
+  gap: 16px;
+  align-items: start;
+}
+
+/* Khung menu bên trái */
+.ch-menu {
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  padding: 12px;
+  background: var(--color-surface);
+  color: var(--color-text);
+}
+
+/* MỚI THÊM: tách rõ khoảng cách giữa các nhóm mục (Tiến độ / Thành viên / Mốc và hoạt động) */
+.ch-menu-section + .ch-menu-section {
+  margin-top: 18px;
+}
+
+/* Tiêu đề nhỏ của từng nhóm mục trong menu */
+.ch-menu-title {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-text-muted);
+  margin: 2px 8px 6px;
+}
+
+/* Mỗi mục trong menu là 1 nút */
+.ch-menu-item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  color: var(--color-text);
+  border: 1px solid transparent;
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background 0.15s ease; /* đổi màu nền mượt khi rê chuột / chọn */
+}
+
+.ch-menu-item:hover {
+  background: var(--color-surface-subtle-2);
+}
+
+/* Mục đang được chọn: nổi bật bằng màu nhấn của dự án (coral) */
+.ch-menu-item-active,
+.ch-menu-item-active:hover {
+  background: var(--color-accent);
+  color: #ffffff;
+}
+
+/* Khung chứa biểu đồ bên phải */
+.ch-panel {
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  padding: 20px;
+  background: var(--color-surface);
+  color: var(--color-text); /* quan trọng: chữ trên trục biểu đồ (currentColor) lấy màu này */
+  min-width: 0; /* cho phép khung co lại, nếu không biểu đồ làm tràn trang */
+}
+
+/* Hàng đầu của khung biểu đồ: tiêu đề bên trái, nút tải ảnh bên phải */
+.ch-panel-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.ch-panel-title {
+  margin: 0 0 4px;
+  font-size: 18px;
+  color: var(--color-text);
+}
+
+/* Dòng giải thích ngắn dưới tiêu đề */
+.ch-panel-desc {
+  margin: 0 0 16px;
+  font-size: 13px;
+  color: var(--color-text-secondary);
+}
+
+/* Nút "Tải ảnh PNG" */
+.ch-download {
+  flex-shrink: 0;
+  background: transparent;
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  padding: 6px 14px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.ch-download:hover:not(:disabled) {
+  background: var(--color-surface-subtle-2);
+}
+
+.ch-download:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.ch-download-error {
+  margin: 0 0 12px;
+  font-size: 13px;
+  color: var(--color-danger);
+}
+
+/* Khung bao biểu đồ; mỗi lần đổi mục thì khung được tạo lại nên hiệu ứng hiện dần chạy lại */
+.ch-chart-wrap {
+  animation: ch-fade-in 0.3s ease;
+}
+
+@keyframes ch-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Số lớn ở đầu biểu đồ (ví dụ "Trung bình 3.2 ngày") */
+.ch-big-number {
+  font-size: 28px;
+  font-weight: 700;
+  margin: 0 0 12px;
+  color: var(--color-text);
+}
+
+.ch-big-number small {
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--color-text-secondary);
+}
+
+/* Hộp "Nhận xét" dưới biểu đồ */
+.ch-insights {
+  margin-top: 16px;
+  padding: 12px 16px;
+  border: 1px solid var(--color-accent-soft-border);
+  border-radius: 10px;
+  background: var(--color-accent-soft-bg);
+  color: var(--color-text);
+}
+
+.ch-insights-title {
+  margin: 0 0 6px;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.ch-insights ul {
+  margin: 0;
+  padding-left: 18px;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+/* Thông báo chưa có dữ liệu / đang tải / lỗi */
+.ch-empty {
+  padding: 60px 10px;
+  text-align: center;
+  color: var(--color-text-secondary);
+}
+
+/* Màn hình vừa: thẻ tóm tắt xuống 3 cột */
+@media (max-width: 1100px) {
+  .ch-kpis {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* Màn hình hẹp (điện thoại): menu chuyển thành 1 hàng nút cuộn ngang ở phía trên */
+@media (max-width: 768px) {
+  .ch-kpis {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .ch-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .ch-menu {
+    display: flex;
+    gap: 6px;
+    overflow-x: auto;
+    padding: 8px;
+  }
+
+  /* MỚI THÊM: để các mục nằm thẳng hàng ngang (bỏ khung của từng nhóm mục) */
+  .ch-menu-section {
+    display: contents;
+  }
+
+  .ch-menu-section + .ch-menu-section {
+    margin-top: 0;
+  }
+
+  .ch-menu-title {
+    display: none; /* ẩn tiêu đề nhóm cho gọn */
+  }
+
+  .ch-menu-item {
+    width: auto;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+}

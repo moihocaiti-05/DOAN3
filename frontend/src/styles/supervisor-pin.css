@@ -1,0 +1,68 @@
+/* ===== CSS cho GV6: ô tìm nhóm + nút ghim (tiền tố "pn-", không trùng file CSS khác) ===== */
+
+.pn-search-wrap {
+  position: relative;
+  margin-bottom: 12px;
+}
+
+.pn-search {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 9px 36px 9px 14px;
+  font-size: 14px;
+  font-family: inherit;
+  color: var(--color-text, #151B26);
+  background: var(--color-surface, #FFFFFF);
+  border: 1px solid var(--color-border, #E5E7EB);
+  border-radius: 10px;
+  outline: none;
+}
+
+.pn-search:focus {
+  border-color: var(--color-accent, #FC636B);
+}
+
+.pn-search::placeholder {
+  color: var(--color-text-muted, #8A93A0);
+}
+
+.pn-search-clear {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  border: none;
+  background: transparent;
+  color: var(--color-text-muted, #8A93A0);
+  font-size: 13px;
+  cursor: pointer;
+  padding: 4px 6px;
+}
+
+.pn-search-clear:hover {
+  color: var(--color-text, #151B26);
+}
+
+/* Nút ghim (ngôi sao): mờ khi chưa ghim, MÀU VÀNG khi đã ghim */
+.pn-pin {
+  border: none;
+  background: transparent;
+  padding: 0 8px 0 0;
+  margin: 0;
+  font-size: 22px; /* MỚI SỬA: to hơn (trước là 16px) */
+  line-height: 1;
+  cursor: pointer;
+  vertical-align: middle;
+  color: var(--color-text-muted, #8A93A0);
+  transition: transform 0.12s ease, color 0.12s ease;
+}
+
+.pn-pin:hover {
+  color: #F5B301; /* di chuột vào thì ngả vàng để biết bấm được */
+  transform: scale(1.15);
+}
+
+/* Đã ghim: vàng cố định ở mọi theme (giống cách giữ màu trắng cố định của avatar) */
+.pn-pin-on {
+  color: #F5B301;
+}

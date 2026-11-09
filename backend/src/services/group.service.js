@@ -328,3 +328,46 @@ exports.deleteGroup = async (groupId, actorId, confirmName) => {
     });
   });
 };
+
+// MỚI THÊM (Phiên 17): Xóa toàn bộ việc, mốc, nhãn của nhóm để import lại.
+// Chỉ Trưởng nhóm được làm, bắt gõ ĐÚNG tên nhóm để xác nhận (giống xóa nhóm)
+exports.clearWorkData = async (groupId, actorId, confirmName) => {
+  // Chặn actorId rỗng: Prisma bỏ qua điều kiện undefined nên có thể khớp nhầm bản ghi bất kỳ
+  if (!actorId) throw new AppError('Thiếu thông tin người dùng', 401);
+
+  const group = await groupRepository.findById(groupId);
+  if (!group) throw new AppError('Nhóm không tồn tại', 404);
+
+  const actorMembership = await groupRepository.findMembership(actorId, groupId);
+  if (!actorMembership || actorMembership.role !== 'leader') {
+    throw new AppError('Chỉ trưởng nhóm mới có quyền xóa dữ liệu công việc', 403);
+  }
+
+  // So khớp CHÍNH XÁC, không trim, không hạ chữ thường
+  if (!confirmName || confirmName !== group.name) {
+    throw new AppError('Tên nhóm xác nhận không khớp', 400);
+  }
+
+  // Lấy đường dẫn file đính kèm TRƯỚC khi xóa Database (xóa xong sẽ không còn truy vấn được)
+  const attachments = await groupRepository.getAttachmentPathsByGroup(groupId);
+
+  // Xóa dữ liệu trong Database bằng transaction
+  await groupRepository.clearWorkDataCascade(groupId);
+
+  // Database xóa thành công rồi mới xóa file vật lý (lỡ rollback thì file còn nguyên)
+  attachments.forEach((a) => {
+    fs.unlink(a.filePath, (err) => {
+      if (err) console.error('Không xóa được file vật lý:', a.filePath, err.message);
+    });
+  });
+
+  // Ghi 1 dòng vào tab Hoạt động
+  await activityService.log({
+    groupId,
+    actorId,
+    type: 'group.data_cleared',
+    targetType: 'group',
+    targetId: groupId,
+    summary: 'đã xóa toàn bộ dữ liệu công việc của nhóm',
+  });
+};

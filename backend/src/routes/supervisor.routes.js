@@ -6,6 +6,9 @@ const remindController = require('../controllers/supervisorRemind.controller'); 
 const contributionController = require('../controllers/supervisorContribution.controller'); // MỚI THÊM (tính năng 3)
 const exportController = require('../controllers/supervisorExport.controller'); // MỚI THÊM (tính năng 4)
 const upcomingController = require('../controllers/supervisorUpcoming.controller'); // MỚI THÊM (tính năng 5)
+const pinController = require('../controllers/supervisorPin.controller'); // MỚI THÊM (GV6)
+const evalController = require('../controllers/supervisorEval.controller'); // MỚI THÊM (GV7)
+const chartController = require('../controllers/supervisorChart.controller'); // MỚI THÊM (GV9)
 const authMiddleware = require('../middlewares/auth.middleware');
 
 // Giảng viên xem danh sách các nhóm mình đang phụ trách
@@ -30,5 +33,19 @@ router.get('/export', authMiddleware, exportController.exportAll);
 
 // MỚI THÊM (tính năng 5): việc và mốc sắp đến hạn (kèm việc/mốc đã quá hạn) của mọi nhóm; ?days=7 (1 đến 60)
 router.get('/upcoming', authMiddleware, upcomingController.getUpcoming);
+
+// MỚI THÊM (GV6): ghim / bỏ ghim 1 nhóm trên trang tổng quan của Giảng viên; Body: { pinned: true | false }
+router.patch('/groups/:groupId/pin', authMiddleware, pinController.setPin);
+
+// MỚI THÊM (GV7): đánh giá theo mốc của Giảng viên
+// Xem các mốc của 1 nhóm kèm đánh giá của mình
+router.get('/groups/:groupId/evaluations', authMiddleware, evalController.getByGroup);
+// Lưu đánh giá 1 mốc (tạo mới hoặc sửa); Body: { rating: 'pass' | 'improve' | 'fail', score: 0..10 hoặc null, note }
+router.put('/milestones/:milestoneId/evaluation', authMiddleware, evalController.save);
+// Xóa đánh giá của mình cho 1 mốc
+router.delete('/milestones/:milestoneId/evaluation', authMiddleware, evalController.remove);
+
+// MỚI THÊM (GV9): số liệu biểu đồ tiến độ theo thời gian của 1 nhóm; ?weeks=4 | 8 | 12 | 0 (0 = toàn bộ)
+router.get('/groups/:groupId/charts', authMiddleware, chartController.getCharts);
 
 module.exports = router;

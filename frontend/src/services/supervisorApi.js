@@ -27,4 +27,24 @@ export const supervisorApi = {
   // MỚI THÊM (tính năng 5): việc và mốc sắp đến hạn trong "days" ngày tới (kèm việc/mốc đã quá hạn chưa xong) của mọi nhóm
   // Trả về { days, overdueCount, upcomingCount, items: [...] } trong res.data.data; mỗi item có kind = 'task' | 'milestone'
   getUpcoming: (days) => api.get('/supervisors/upcoming', { params: { days } }),
+
+  // MỚI THÊM (GV6): ghim (pinned = true) hoặc bỏ ghim (false) 1 nhóm; lưu trong database nên đổi máy vẫn còn
+  pinGroup: (groupId, pinned) => api.patch(`/supervisors/groups/${groupId}/pin`, { pinned }),
+
+  // MỚI THÊM (GV7): danh sách mốc của 1 nhóm kèm đánh giá của Giảng viên đang đăng nhập
+  // Trả về { groupName, evaluatedCount, totalCount, milestones: [...] } trong res.data.data
+  // Mỗi mốc: { id, title, dueDate, depth, hasChildren, totalTasks, doneTasks, evaluation: { rating, score, note, updatedAt } | null }
+  getEvaluations: (groupId) => api.get(`/supervisors/groups/${groupId}/evaluations`),
+
+  // MỚI THÊM (GV7): lưu đánh giá 1 mốc (tạo mới hoặc sửa); data = { rating: 'pass' | 'improve' | 'fail', score: số 0..10 hoặc null, note }
+  // Trả về đánh giá đã lưu { rating, score, note, updatedAt } trong res.data.data
+  saveEvaluation: (milestoneId, data) => api.put(`/supervisors/milestones/${milestoneId}/evaluation`, data),
+
+  // MỚI THÊM (GV7): xóa đánh giá của mình cho 1 mốc
+  deleteEvaluation: (milestoneId) => api.delete(`/supervisors/milestones/${milestoneId}/evaluation`),
+
+  // MỚI THÊM (GV9): số liệu biểu đồ của 1 nhóm; weeks = 4 | 8 | 12 | 0 (0 = toàn bộ)
+  // Trả về { groupName, weeks, totalTasks, avgDaysOverall, avgDaysCount, weekly: [...] } trong res.data.data
+  // Mỗi phần tử weekly: { weekStart, label, completed, cumulativeDone, cumulativeTotal, cumulativePercent, due, late, avgDays, avgCount }
+  getCharts: (groupId, weeks) => api.get(`/supervisors/groups/${groupId}/charts`, { params: { weeks } }),
 };

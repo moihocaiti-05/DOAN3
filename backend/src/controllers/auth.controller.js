@@ -4,7 +4,7 @@ const authService = require('../services/auth.service'); // Controller chỉ đ�
 exports.register = async (req, res, next) => {
   try {
     // req.body đã bao gồm cả field "role" nếu Frontend gửi lên (không cần sửa gì thêm ở đây)
-    // MỚI SỬA: Service giờ trả { email, requiresVerification: true } (chưa đăng nhập được, phải nhập mã gửi qua mail)
+    // Service giờ trả { email, requiresVerification: true } (chưa đăng nhập được, phải nhập mã gửi qua mail)
     const result = await authService.register(req.body);
     res.status(201).json({ success: true, data: result }); // 201 = tạo thành công
   } catch (error) {
@@ -22,7 +22,7 @@ exports.login = async (req, res, next) => {
   }
 };
 
-// MỚI THÊM: Xử lý route POST /auth/verify-email - nhập mã 6 số, đúng thì trả luôn { user, token } như đăng nhập
+// Xử lý route POST /auth/verify-email - nhập mã 6 số, đúng thì trả luôn { user, token } như đăng nhập
 exports.verifyEmail = async (req, res, next) => {
   try {
     const result = await authService.verifyEmail(req.body);
@@ -32,12 +32,23 @@ exports.verifyEmail = async (req, res, next) => {
   }
 };
 
-// MỚI THÊM: Xử lý route POST /auth/resend-code - gửi lại mã xác nhận mới
+// Xử lý route POST /auth/resend-code - gửi lại mã xác nhận mới
 exports.resendCode = async (req, res, next) => {
   try {
     await authService.resendCode(req.body);
     // Luôn trả cùng 1 câu dù email có tồn tại hay không, để người ngoài không dò được email nào đã đăng ký
     res.json({ success: true, message: 'Nếu email hợp lệ, mã xác nhận mới đã được gửi' });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// MỚI THÊM: Xử lý route POST /auth/google
+// Trả { user, token } khi đăng nhập thành công, hoặc { needsRole: true, profile } khi là email mới cần chọn vai trò
+exports.googleLogin = async (req, res, next) => {
+  try {
+    const result = await authService.googleLogin(req.body);
+    res.json({ success: true, data: result });
   } catch (error) {
     next(error);
   }

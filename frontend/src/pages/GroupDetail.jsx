@@ -20,6 +20,7 @@ import StatsModal from '../components/StatsModal';
 import ChatBox from '../components/ChatBox';
 import TimelineView from '../components/TimelineView';
 import ActivityFeed from '../components/ActivityFeed'; // MỚI THÊM: tab "Hoạt động"
+import ScrollButtons from "../components/ScrollButtons"; // MỚI THÊM: hai nút mũi tên lên đầu / xuống cuối trang
 import '../styles/kanban.css';
 
 // ===== MỚI THÊM: Bộ lọc / tìm kiếm / sắp xếp công việc =====
@@ -162,6 +163,7 @@ export default function GroupDetail() {
   const [showTaskDetail, setShowTaskDetail] = useState(false);
 
   const [activeTab, setActiveTab] = useState('board');
+  const [onlineIds, setOnlineIds] = useState(new Set()); // MỚI THÊM: Set userId đang mở trang nhóm này (nhận từ Backend qua socket), hiện chấm xanh ở AvatarStack
 
   const [viewMode, setViewMode] = useState('team');
 
@@ -256,13 +258,28 @@ export default function GroupDetail() {
       }
     };
 
+    // MỚI THÊM: Backend báo danh sách người đang online trong nhóm mỗi khi có người vào / rời
+    const handlePresence = (payload) => {
+      if (!payload || payload.groupId !== groupId) return;
+      setOnlineIds(new Set(payload.onlineUserIds));
+    };
+
+    // MỚI THÊM: mạng rớt rồi nối lại thì socket mới chưa ở trong phòng nhóm, nên xin vào lại
+    // (lần kết nối đầu tiên cũng chạy dòng này, xin vào 2 lần là vô hại)
+    const handleReconnect = () => socket.emit('join_group', groupId);
+
     socket.on('new_message', handleNewMessage);
     socket.on('new_conversation_message', handleNewConversationMessage);
+    socket.on('presence_update', handlePresence);
+    socket.on('connect', handleReconnect);
 
     return () => {
       socket.emit('leave_group', groupId);
       socket.off('new_message', handleNewMessage);
       socket.off('new_conversation_message', handleNewConversationMessage);
+      socket.off('presence_update', handlePresence);
+      socket.off('connect', handleReconnect);
+      setOnlineIds(new Set()); // rời nhóm thì xóa danh sách online cũ
     };
   }, [groupId, user.id]);
 
@@ -370,6 +387,7 @@ export default function GroupDetail() {
         sensors={sensors}
         onDragEnd={handleDragEnd}
         onOpenDetail={handleOpenTaskDetail}
+        hideBoardWhenEmpty={node.children.length > 0} // MỚI THÊM: mốc cha không có việc riêng thì không vẽ bảng trống
       />
       {node.children.length > 0 && (
         <div className="kanban-zone-children">
@@ -428,6 +446,43 @@ export default function GroupDetail() {
   setShowTaskDetail(true);
 };
 
+  // MỚI THÊM: bấm 1 dòng ở tab "Hoạt động" thì mở đúng công việc / chuyển tab Mốc / mở danh sách thành viên
+  // Trả về CHUỖI báo lỗi nếu không mở được (ActivityFeed sẽ hiện chuỗi này); không trả gì nghĩa là đã mở được
+  const handleOpenActivityTarget = async (activity) => {
+    if (activity.targetType === 'task') {
+      // Tìm công việc theo id. Nếu id là của VIỆC CON thì mở công việc CHA chứa nó (việc con không có cửa sổ riêng)
+      const findTask = (list) =>
+        list.find((t) => t.id === activity.targetId) ||
+        list.find((t) => (t.subtasks || []).some((s) => s.id === activity.targetId));
+
+      let found = findTask(tasks);
+      if (!found) {
+        // Danh sách trên màn hình có thể cũ (người khác vừa tạo việc mới): tải lại 1 lần rồi tìm tiếp
+        try {
+          const res = await taskApi.getByGroup(groupId);
+          setTasks(res.data.data);
+          found = findTask(res.data.data);
+        } catch {
+          return 'Không tải được danh sách công việc, vui lòng thử lại.';
+        }
+      }
+      if (!found) return 'Công việc này không còn tồn tại (có thể đã bị xóa).';
+      handleOpenTaskDetail(found);
+      return;
+    }
+
+    // Mốc và bình luận (bình luận ghi targetType 'milestone') -> chuyển sang tab Tiến độ theo mốc
+    if (activity.targetType === 'milestone') {
+      setActiveTab('timeline');
+      return;
+    }
+
+    // Hoạt động về thành viên / Giảng viên -> mở danh sách thành viên của nhóm
+    if (activity.targetType === 'member' || activity.targetType === 'supervisor') {
+      setShowMembersModal(true);
+    }
+  };
+
   // MỚI THÊM: tổng số hiện trên badge nút 💬 = tin chưa đọc + lời mời kết bạn đang chờ
   const totalChatBadge = unreadChat + pendingFriendCount;
 
@@ -443,7 +498,7 @@ export default function GroupDetail() {
           <div className="header-actions">
   <div className="header-action-group">
     <NotificationBell />
-    <AvatarStack members={members} onClick={() => setShowMembersModal(true)} />
+    <AvatarStack members={members} onlineIds={onlineIds} onClick={() => setShowMembersModal(true)} />
   </div>
 
   <div className="header-action-group">
@@ -574,7 +629,7 @@ export default function GroupDetail() {
         ) : activeTab === 'timeline' ? (
           <TimelineView groupId={groupId} canReview={canReview} />
         ) : (
-          <ActivityFeed groupId={groupId} />
+          <ActivityFeed groupId={groupId} onOpenTarget={handleOpenActivityTarget} />
         )}
       </main>
 
@@ -600,12 +655,19 @@ export default function GroupDetail() {
         currentUserId={user.id}
         isLeader={isLeader}
       />
-      <MembersModal
+            <MembersModal
         isOpen={showMembersModal}
         onClose={() => setShowMembersModal(false)}
         groupId={groupId}
         onChanged={() => groupApi.getMembers(groupId).then((res) => setMembers(res.data.data))}
         onDeleted={() => navigate('/home')}
+        // MỚI THÊM (Phiên 17): sau khi xóa dữ liệu công việc thì đóng cửa sổ chi tiết đang mở và tải lại Kanban, Mốc
+        onCleared={() => {
+          setShowTaskDetail(false);
+          setSelectedTask(null);
+          loadTasks();
+          loadMilestones();
+        }}
       />
       <StatsModal
         isOpen={showStatsModal}
@@ -628,6 +690,8 @@ export default function GroupDetail() {
   isMember={isMember} // MỚI THÊM: không phải thành viên (VD Giảng viên) thì modal chuyển sang chế độ chỉ xem
   canReview={canReview} // MỚI THÊM (Phiên 12): Trưởng nhóm / Giảng viên được duyệt hoặc từ chối ở bước Kiểm định
 />
+
+      <ScrollButtons /> {/* MỚI THÊM */}
     </div>
   );
 }

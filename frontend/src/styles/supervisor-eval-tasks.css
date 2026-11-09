@@ -1,0 +1,197 @@
+/* CSS RIÊNG cho thẻ tab và danh sách việc trong hộp thoại "Đánh giá theo mốc" (tiền tố evt-) */
+/* Màu dùng var(--color-*, màu dự phòng) để đổi theme không bị chìm chữ */
+
+/* ===== Thẻ tab "Đánh giá" / "Công việc" ===== */
+.evt-tabs {
+  display: flex;
+  gap: 6px;
+  margin-top: 20px;
+  border-bottom: 1px solid var(--color-border, #e3e5e8);
+}
+.evt-tab {
+  padding: 8px 16px;
+  margin-bottom: -1px;
+  border: none;
+  border-bottom: 2px solid transparent;
+  background: transparent;
+  color: var(--color-text-secondary, #6b7280);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.evt-tab:hover {
+  color: var(--color-text, #151b26);
+}
+.evt-tab-active {
+  color: var(--color-accent, #fc636b);
+  border-bottom-color: var(--color-accent, #fc636b);
+}
+/* Khoảng cách giữa thẻ tab và nội dung bên dưới */
+.evt-tabs + * {
+  margin-top: 14px;
+}
+
+/* ===== Danh sách việc ===== */
+.evt-summary {
+  margin: 0 0 10px;
+  font-size: 13px;
+  color: var(--color-text-secondary, #6b7280);
+}
+.evt-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.evt-sublist {
+  margin-top: 6px;
+}
+
+.evt-task {
+  border-radius: 10px;
+  border: 1px solid var(--color-border, #e3e5e8);
+  background: var(--color-surface, #fff);
+  overflow: hidden;
+}
+/* Việc con: nền nhạt hơn để phân biệt với việc chính */
+.evt-task-sub {
+  background: var(--color-surface-subtle, #f7f8f9);
+}
+
+/* Dòng tiêu đề của 1 việc (bấm để mở / đóng) */
+.evt-task-head {
+  width: 100%;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border: none;
+  background: transparent;
+  color: var(--color-text, #151b26);
+  font-size: 13px;
+  text-align: left;
+  cursor: pointer;
+}
+.evt-task-head:hover {
+  background: var(--color-surface-subtle, #f7f8f9);
+}
+.evt-caret {
+  width: 12px;
+  color: var(--color-text-muted, #9ca3af);
+}
+.evt-task-title {
+  flex: 1;
+  min-width: 140px;
+  font-weight: 600;
+  word-break: break-word;
+}
+.evt-sub-count,
+.evt-assignee {
+  font-size: 12px;
+  color: var(--color-text-secondary, #6b7280);
+}
+.evt-deadline {
+  font-size: 12px;
+  color: var(--color-text-muted, #9ca3af);
+}
+.evt-deadline-late {
+  color: var(--color-danger, #d14343);
+  font-weight: 700;
+}
+
+/* Huy hiệu trạng thái: màu giống ý nghĩa các cột Kanban */
+.evt-status {
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+  border: 1px solid var(--color-border, #e3e5e8);
+  color: var(--color-text-secondary, #6b7280);
+  background: var(--color-surface-subtle, #f0f1f3);
+}
+.evt-status-doing {
+  color: #2f6fdb;
+  background: rgba(59, 130, 246, 0.12);
+  border-color: rgba(59, 130, 246, 0.4);
+}
+.evt-status-review {
+  color: #7c4ddb;
+  background: rgba(139, 92, 246, 0.12);
+  border-color: rgba(139, 92, 246, 0.4);
+}
+.evt-status-redo {
+  color: #d9650f;
+  background: rgba(249, 115, 22, 0.12);
+  border-color: rgba(249, 115, 22, 0.4);
+}
+.evt-status-done {
+  color: #1f8a5b;
+  background: rgba(46, 158, 107, 0.12);
+  border-color: rgba(46, 158, 107, 0.4);
+}
+
+/* Phần nội dung xổ ra khi bấm vào 1 việc */
+.evt-task-body {
+  padding: 4px 14px 14px 32px;
+  border-top: 1px solid var(--color-border-light, #eef0f2);
+}
+.evt-desc {
+  margin: 10px 0 0;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--color-text, #151b26);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.evt-desc-empty {
+  font-style: italic;
+  color: var(--color-text-muted, #9ca3af);
+}
+.evt-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 16px;
+  margin-top: 10px;
+  font-size: 12px;
+  color: var(--color-text-secondary, #6b7280);
+}
+.evt-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 10px;
+}
+.evt-tag {
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  border: 1px solid var(--color-border, #e3e5e8);
+  color: var(--color-text-secondary, #6b7280);
+}
+.evt-sub-title {
+  margin: 14px 0 0;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--color-text-secondary, #6b7280);
+}
+
+/* Danh sách rỗng */
+.evt-empty {
+  padding: 16px;
+  border-radius: 10px;
+  border: 1px dashed var(--color-border, #e3e5e8);
+  text-align: center;
+  color: var(--color-text-muted, #9ca3af);
+}
+.evt-empty p {
+  margin: 0;
+  font-size: 14px;
+}
+.evt-empty-hint {
+  margin-top: 6px !important;
+  font-size: 12px !important;
+}

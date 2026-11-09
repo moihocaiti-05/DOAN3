@@ -1,4 +1,8 @@
 const taskService = require('../services/task.service');
+// MỚI THÊM: file mẫu import giờ do service riêng này tạo (menu Email / Mốc / Nhãn như bản v3)
+const taskTemplateService = require('../services/taskTemplate.service');
+const path = require('path');
+const fs = require('fs');
 
 exports.createTask = async (req, res, next) => {
   try {
@@ -39,12 +43,12 @@ exports.assignTask = async (req, res, next) => {
     next(error);
   }
 };
-const path = require('path');
-const fs = require('fs');
 
 exports.downloadTemplate = async (req, res, next) => {
   try {
-    const workbook = await taskService.generateTemplate();
+    // MỚI SỬA: nhận ?groupId=... rồi giao cho taskTemplate.service dựng file mẫu
+    // (đổ sẵn email thành viên, cây mốc, nhãn của nhóm đó vào các sheet phụ + menu chọn)
+    const workbook = await taskTemplateService.generateTemplate(req.query.groupId, req.user.id);
     res.setHeader('Content-Disposition', 'attachment; filename=mau-import-task.xlsx');
     res.setHeader(
       'Content-Type',

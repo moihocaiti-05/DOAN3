@@ -1,0 +1,389 @@
+/* Menu vòng cung ở mép phải (QuickNav.jsx). Mọi class bắt đầu bằng "qn-".
+   Màu chỉ lấy từ biến theme (--color-*) nên đổi giao diện là đổi theo. */
+
+/* ----- Khung gốc: ô 52x52 dính mép phải, giữa chiều cao màn hình; các nút xòe ra từ tâm ô này ----- */
+.qn-root {
+  --qn-r: 112px; /* bán kính vòng cung */
+  position: fixed;
+  top: 50%;
+  right: 20px;
+  z-index: 1000;
+  width: 52px;
+  height: 52px;
+  margin-top: -26px;
+  font-family: Inter, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+}
+
+/* Lớp mờ phía sau, đậm dần về phía mép phải (nơi có menu) */
+.qn-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 990;
+  background: radial-gradient(circle at 100% 50%, rgba(0, 0, 0, 0.55), rgba(0, 0, 0, 0.2) 55%, rgba(0, 0, 0, 0) 85%);
+  -webkit-backdrop-filter: blur(3px);
+  backdrop-filter: blur(3px);
+  animation: qn-fade 0.2s ease;
+}
+
+@keyframes qn-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* ----- Nút tròn chính ----- */
+.qn-fab {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 52px;
+  height: 52px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--color-accent), var(--color-accent-hover));
+  color: #fff;
+  box-shadow: 0 10px 26px color-mix(in srgb, var(--color-accent) 45%, transparent), 0 2px 6px rgba(0, 0, 0, 0.3);
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.qn-fab:hover {
+  transform: scale(1.08);
+}
+
+.qn-fab:active {
+  transform: scale(0.95);
+}
+
+.qn-fab:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--color-surface), 0 0 0 5px var(--color-accent);
+}
+
+/* Vòng sáng nhấp nháy để nút nổi bật khi đang đóng */
+.qn-fab::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 2px solid var(--color-accent);
+  opacity: 0;
+  animation: qn-ring 2.8s ease-out infinite;
+  pointer-events: none;
+}
+
+.qn-open .qn-fab::after {
+  animation: none;
+}
+
+@keyframes qn-ring {
+  0% {
+    opacity: 0.65;
+    transform: scale(1);
+  }
+  70%,
+  100% {
+    opacity: 0;
+    transform: scale(1.7);
+  }
+}
+
+/* Dấu + xoay 45 độ thành dấu ✕ khi mở */
+.qn-fab-icon {
+  display: flex;
+  transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.qn-open .qn-fab-icon {
+  transform: rotate(135deg);
+}
+
+/* ----- Các nút xòe theo vòng cung -----
+   --dx, --dy (do QuickNav.jsx tính) là hướng của nút, nhân với bán kính ra vị trí thật. */
+.qn-item {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  width: 56px;
+  margin: -28px 0 0 -28px;
+  padding: 0;
+  font: inherit;
+  border: none;
+  background: transparent;
+  color: var(--color-text);
+  cursor: pointer;
+  opacity: 0;
+  transform: translate(0, 0) scale(0.3);
+  pointer-events: none;
+  transition:
+    transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) calc(var(--i) * 45ms),
+    opacity 0.2s ease calc(var(--i) * 45ms);
+}
+
+.qn-open .qn-item {
+  opacity: 1;
+  transform: translate(calc(var(--qn-r) * var(--dx)), calc(var(--qn-r) * var(--dy))) scale(1);
+  pointer-events: auto;
+}
+
+.qn-item:focus-visible {
+  outline: none;
+}
+
+/* Hình tròn chứa biểu tượng: kính mờ, phóng to khi rê chuột giống Dock của Mac */
+.qn-orb {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  box-sizing: border-box;
+  border-radius: 50%;
+  border: 1px solid var(--color-border);
+  background: color-mix(in srgb, var(--color-surface) 86%, transparent);
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+  color: var(--color-text);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.3), 0 2px 6px rgba(0, 0, 0, 0.18);
+  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), background 0.15s ease, color 0.15s ease,
+    border-color 0.15s ease;
+}
+
+.qn-item:hover .qn-orb,
+.qn-item:focus-visible .qn-orb {
+  transform: scale(1.22) translateY(-2px);
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+  color: #fff;
+}
+
+.qn-item:active .qn-orb {
+  transform: scale(1.05);
+}
+
+/* Trang đang đứng: viền sáng + chữ màu nhấn */
+.qn-item-active .qn-orb {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+  box-shadow: 0 0 0 3px var(--color-accent-soft-bg), 0 10px 24px rgba(0, 0, 0, 0.3);
+}
+
+.qn-item-active:hover .qn-orb {
+  color: #fff;
+}
+
+.qn-label {
+  padding: 2px 10px;
+  font-size: 11.5px;
+  font-weight: 600;
+  line-height: 1.5;
+  white-space: nowrap;
+  border-radius: 999px;
+  border: 1px solid var(--color-border-light);
+  background: color-mix(in srgb, var(--color-surface) 92%, transparent);
+  color: var(--color-text);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.22);
+}
+
+/* ----- Thẻ danh sách nhóm (mở khi bấm nút "Nhóm") ----- */
+.qn-groups {
+  position: fixed;
+  top: 50%;
+  right: 210px; /* nằm ngay bên trái vòng cung */
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  width: 280px;
+  max-height: min(70vh, 460px);
+  box-sizing: border-box;
+  padding: 14px;
+  border-radius: 18px;
+  border: 1px solid var(--color-border);
+  background: color-mix(in srgb, var(--color-surface) 93%, transparent);
+  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(16px);
+  color: var(--color-text);
+  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.4);
+  font-family: Inter, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  font-size: 14px;
+  transform: translateY(-50%);
+  transform-origin: right center;
+  animation: qn-card 0.24s cubic-bezier(0.2, 0.9, 0.3, 1.1);
+}
+
+@keyframes qn-card {
+  from {
+    opacity: 0;
+    transform: translateY(-50%) translateX(18px) scale(0.94);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(-50%) translateX(0) scale(1);
+  }
+}
+
+.qn-groups-title {
+  margin: 0 0 10px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
+}
+
+.qn-search {
+  width: 100%;
+  height: 36px;
+  box-sizing: border-box;
+  margin-bottom: 8px;
+  padding: 0 12px;
+  font: inherit;
+  border-radius: 10px;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text);
+}
+
+.qn-search::placeholder {
+  color: var(--color-text-muted);
+}
+
+.qn-search:focus {
+  outline: none;
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 3px var(--color-accent-soft-bg);
+}
+
+.qn-group-list {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 4px;
+  min-height: 0;
+  overflow-y: auto;
+  padding-right: 2px;
+}
+
+.qn-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 12px;
+  font: inherit;
+  text-align: left;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--color-text);
+  cursor: pointer;
+}
+
+.qn-group:hover {
+  background: var(--color-surface-subtle);
+  border-color: var(--color-border-light);
+}
+
+.qn-group-active,
+.qn-group-active:hover {
+  background: var(--color-accent-soft-bg);
+  border-color: var(--color-accent-soft-border);
+}
+
+.qn-group-dot {
+  flex: none;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--color-border);
+}
+
+.qn-group-active .qn-group-dot {
+  background: var(--color-accent);
+}
+
+.qn-group-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  font-weight: 500;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.qn-group-now {
+  flex: none;
+  padding: 2px 8px;
+  font-size: 11px;
+  font-weight: 600;
+  border-radius: 999px;
+  background: var(--color-accent);
+  color: #fff;
+}
+
+.qn-empty {
+  margin: 6px 4px;
+  font-size: 13px;
+  color: var(--color-text-muted);
+}
+
+.qn-empty-error {
+  color: var(--color-danger);
+}
+
+/* ----- Màn hình nhỏ: vòng cung gọn lại, thẻ nhóm thành tấm trượt ở đáy ----- */
+@media (max-width: 700px) {
+  .qn-root {
+    --qn-r: 92px;
+    right: 14px;
+  }
+
+  .qn-groups {
+    top: auto;
+    right: 12px;
+    bottom: 12px;
+    left: 12px;
+    width: auto;
+    max-height: 38vh;
+    transform: none;
+    transform-origin: bottom center;
+    animation: qn-sheet 0.24s ease;
+  }
+
+  @keyframes qn-sheet {
+    from {
+      opacity: 0;
+      transform: translateY(16px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .qn-backdrop,
+  .qn-groups,
+  .qn-fab::after {
+    animation: none;
+  }
+
+  .qn-item,
+  .qn-orb,
+  .qn-fab,
+  .qn-fab-icon {
+    transition: none;
+  }
+}

@@ -7,6 +7,8 @@ import Home from './pages/Home';
 import GroupDetail from './pages/GroupDetail';
 import ProfilePage from './pages/ProfilePage';
 import SupervisorDashboard from './pages/SupervisorDashboard'; // MỚI THÊM
+import SupervisorCharts from './pages/SupervisorCharts'; // MỚI THÊM (GV9): trang biểu đồ của 1 nhóm
+import QuickNav from './components/QuickNav'; // MỚI THÊM: bảng phím tắt ở mép phải
 
 function PrivateRoute({ children }) {
   const { user } = useAuth();
@@ -16,6 +18,7 @@ function PrivateRoute({ children }) {
 function App() {
   return (
     <BrowserRouter>
+      <QuickNav /> {/* MỚI THÊM: hiện ở mọi trang sau khi đăng nhập */}
       <Routes>
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
@@ -35,6 +38,15 @@ function App() {
           element={
             <PrivateRoute>
               <SupervisorDashboard />
+            </PrivateRoute>
+          }
+        />
+        {/* MỚI THÊM (GV9): trang biểu đồ của 1 nhóm, mở từ nút "Biểu đồ" trên trang /supervisor */}
+        <Route
+          path="/supervisor/groups/:groupId/charts"
+          element={
+            <PrivateRoute>
+              <SupervisorCharts />
             </PrivateRoute>
           }
         />

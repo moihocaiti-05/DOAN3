@@ -1,0 +1,226 @@
+/* ===== MỚI THÊM: gọn cột Kanban khi có nhiều việc - chia trang + khung "Xem tất cả" của cột ===== */
+
+/* Thanh chia trang ‹ 1/6 › + nút "Xem tất cả" ở cuối cột */
+.kanban-pager {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid var(--color-border-light);
+}
+
+.kanban-pager-nav {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.kanban-pager-btn {
+  width: 26px;
+  height: 26px;
+  font-size: 16px;
+  line-height: 1;
+  color: var(--color-text);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.kanban-pager-btn:hover:not(:disabled) {
+  color: var(--color-accent);
+  border-color: var(--color-accent);
+}
+
+.kanban-pager-btn:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.kanban-pager-text {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  min-width: 34px;
+  text-align: center;
+}
+
+.kanban-viewall-btn {
+  padding: 5px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  font-family: 'Inter', sans-serif;
+  color: var(--color-accent);
+  background: none;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.kanban-viewall-btn:hover {
+  border-color: var(--color-accent);
+  background: var(--color-accent-soft-bg);
+}
+
+/* Khung (modal) danh sách đầy đủ của 1 cột */
+.column-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+.column-modal {
+  width: 100%;
+  max-width: 1360px;
+  height: 92vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  padding: 18px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25);
+  font-family: 'Inter', sans-serif;
+}
+
+.column-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.column-modal-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--color-text);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.column-modal-close,
+.column-modal-clear {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+  color: var(--color-text-muted);
+  padding: 4px 8px;
+  border-radius: 6px;
+}
+
+.column-modal-close:hover,
+.column-modal-clear:hover {
+  color: var(--color-accent);
+  background: var(--color-surface-subtle-2);
+}
+
+.column-modal-search-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.column-modal-search {
+  flex: 1;
+  padding: 9px 12px;
+  font-size: 13.5px;
+  border: 1.5px solid var(--color-border);
+  border-radius: 8px;
+  outline: none;
+  background: var(--color-surface);
+  color: var(--color-text);
+}
+
+.column-modal-search:focus {
+  border-color: var(--color-accent);
+}
+
+.column-modal-count {
+  font-size: 12px;
+  color: var(--color-text-muted);
+  margin: 8px 2px 10px;
+}
+
+/* Danh sách cuộn BÊN TRONG khung -> không làm dài trang.
+   Lưới các cột rộng bằng thẻ trên Kanban, thẻ cùng hàng cao đều nhau (grid mặc định kéo giãn) */
+.column-modal-list {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 312px));
+  justify-content: center;
+  align-content: start;
+  gap: 12px;
+  padding: 4px;
+}
+
+/* Lúc đang kéo thẻ ra ngoài: khung trong suốt và không chặn chuột để thấy và thả vào các cột của bảng phía sau */
+.column-modal-overlay[data-dragging="true"] {
+  background: transparent;
+  pointer-events: none;
+}
+
+.column-modal-overlay[data-dragging="true"] .column-modal {
+  opacity: 0;
+}
+
+.column-modal-empty {
+  grid-column: 1 / -1;
+  text-align: center;
+  color: var(--color-text-muted);
+  font-size: 13.5px;
+  padding: 24px 0;
+  margin: 0;
+}
+
+/* ===== MỚI THÊM: mọi thẻ việc cao BẰNG NHAU (trên cột Kanban, trong khung "Xem tất cả" và thẻ "bóng" khi kéo) =====
+   Muốn thẻ cao hơn/thấp hơn thì chỉ sửa 1 số: --task-card-height */
+.task-card {
+  --task-card-height: 176px;
+  height: var(--task-card-height);
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.task-card > * {
+  flex-shrink: 0;
+}
+
+/* Tiêu đề tối đa 2 dòng, mô tả tối đa 1 dòng, nhãn nằm 1 hàng - phần dài hơn bị cắt (xem đủ trong chi tiết việc) */
+.task-card .task-card-title {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+}
+
+.task-card .task-card-desc {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 1;
+  line-clamp: 1;
+  overflow: hidden;
+}
+
+.task-card .task-tag-list {
+  flex-wrap: nowrap;
+  overflow: hidden;
+}
+
+/* Dòng người phụ trách + hạn chót luôn nằm sát đáy thẻ */
+.task-card .task-card-footer {
+  margin-top: auto;
+}

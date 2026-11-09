@@ -1,0 +1,59 @@
+/* Thanh "Có N hoạt động mới, bấm để xem" ở đầu tab Hoạt động (CSS riêng, khớp tên với tính năng realtime)
+   MUỐN ĐỔI MÀU: sửa --activity-live-color. Dùng var(--color-*) có màu dự phòng để khớp mọi theme */
+.activity-new-banner {
+  --activity-live-color: var(--color-primary, #fc636b);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  margin: 0 0 12px;
+  padding: 10px 14px;
+  border: 1px solid var(--activity-live-color);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--activity-live-color) 14%, transparent);
+  color: var(--color-text, #e5e7eb);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  animation: activity-new-slide 0.25s ease-out;
+}
+
+.activity-new-banner:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--activity-live-color) 24%, transparent);
+}
+
+.activity-new-banner:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+/* Chấm tròn nhấp nháy bên trái chữ */
+.activity-new-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--activity-live-color);
+  animation: activity-new-pulse 1.4s ease-in-out infinite;
+}
+
+@keyframes activity-new-slide {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes activity-new-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
+  }
+}

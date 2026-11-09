@@ -46,8 +46,22 @@ const ensureCanViewGroup = async (userId, groupId) => {
   throw new AppError('Bạn không có quyền xem dữ liệu của nhóm này', 403);
 };
 
+// MỚI THÊM: đổi deadline (chuỗi "2026-10-30" từ ô chọn ngày) thành đối tượng Date trước khi lưu.
+// Prisma không nhận chuỗi ngày rút gọn, sẽ báo "Expected ISO-8601 DateTime". Dùng chung cho tạo Task và tạo Subtask.
+//  - undefined: không gửi deadline -> Prisma bỏ qua
+//  - chuỗi rỗng hoặc null: không có hạn -> lưu null
+const parseDeadline = (deadline) => {
+  if (deadline === undefined) return undefined;
+  if (!deadline) return null;
+  const value = new Date(deadline);
+  if (Number.isNaN(value.getTime())) {
+    throw new AppError('Deadline không hợp lệ', 400);
+  }
+  return value;
+};
+
 exports.createTask = async (taskData, creatorId) => {
-  const { groupId, assignedTo, tagNames = [], ...restData } = taskData;
+  const { groupId, assignedTo, tagNames = [], deadline, ...restData } = taskData;
 
   const creatorMembership = await groupRepository.findMembership(creatorId, groupId);
   if (!creatorMembership) {
@@ -62,7 +76,7 @@ exports.createTask = async (taskData, creatorId) => {
   }
 
   const task = await taskRepository.createWithTags(
-    { ...restData, groupId, assignedTo, createdBy: creatorId },
+    { ...restData, deadline: parseDeadline(deadline), groupId, assignedTo, createdBy: creatorId },
     tagNames
   );
 
@@ -313,6 +327,123 @@ const resolveMilestonePath = async (pathString, groupId, flatMilestones, created
   return milestoneId;
 };
 
+// ---------- MỚI THÊM: đọc file Excel theo TIÊU ĐỀ CỘT (không còn phụ thuộc vị trí cột) ----------
+
+// Lấy chữ từ 1 ô Excel. Ô email hay bị Excel tự đổi thành hyperlink ({text, hyperlink}),
+// ô công thức là {result}, ô nhiều kiểu chữ là {richText} -> đều đổi về chuỗi thường.
+const cellText = (v) => {
+  if (v === null || v === undefined) return '';
+  if (v instanceof Date) return Number.isNaN(v.getTime()) ? '' : v.toISOString().slice(0, 10);
+  if (typeof v === 'object') {
+    if (Array.isArray(v.richText)) return v.richText.map((p) => p.text).join('').trim();
+    if (v.text !== undefined) return cellText(v.text);
+    if (v.result !== undefined) return cellText(v.result);
+    return '';
+  }
+  return String(v).trim();
+};
+
+// Chuẩn hóa tiêu đề: bỏ dấu, thường hóa, bỏ phần trong ngoặc ().
+// VD "Độ ưu tiên (low/medium/high)" -> "do uu tien"
+const normalizeHeader = (value) =>
+  cellText(value)
+    .toLowerCase()
+    .replace(/đ/g, 'd')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/\([^)]*\)/g, ' ')
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim();
+
+// Mỗi cột chấp nhận nhiều tên tiêu đề (đã chuẩn hóa). Muốn thêm tên mới chỉ cần thêm vào đây.
+const IMPORT_COLUMN_ALIASES = {
+  title: ['ten cong viec', 'cong viec', 'ten task', 'task', 'tieu de'],
+  description: ['mo ta'],
+  email: ['email', 'email nguoi phu trach', 'nguoi phu trach', 'nguoi thuc hien', 'phu trach'],
+  priority: ['do uu tien', 'uu tien', 'priority'],
+  deadline: ['deadline', 'han chot', 'han hoan thanh', 'han'],
+  milestone: ['ten moc', 'moc'],
+  tags: ['nhan', 'tag', 'tags'],
+  parent: ['thuoc cong viec cha', 'cong viec cha', 'viec cha'],
+};
+
+const IMPORT_REQUIRED_LABEL = 'Tên công việc';
+
+// Dò dòng tiêu đề trong 10 dòng đầu. Trả về { headerRowNumber, columns } hoặc null nếu thiếu cột "Tên công việc"
+const findImportHeader = (sheet) => {
+  const lastRow = Math.min(10, sheet.rowCount);
+  for (let r = 1; r <= lastRow; r++) {
+    const columns = {};
+    sheet.getRow(r).eachCell({ includeEmpty: false }, (cell, colNumber) => {
+      const key = normalizeHeader(cell.value);
+      if (!key) return;
+      for (const [field, aliases] of Object.entries(IMPORT_COLUMN_ALIASES)) {
+        if (columns[field] === undefined && aliases.includes(key)) {
+          columns[field] = colNumber;
+          break;
+        }
+      }
+    });
+    if (columns.title !== undefined) return { headerRowNumber: r, columns };
+  }
+  return null;
+};
+
+// Ưu tiên sheet tên "Danh sách task" / "Danh sách công việc" / "Import"; không có thì lấy sheet ĐẦU TIÊN như trước
+const pickImportSheet = (workbook) =>
+  workbook.worksheets.find((ws) =>
+    ['danh sach task', 'danh sach cong viec', 'import'].includes(normalizeHeader(ws.name))
+  ) || workbook.worksheets[0];
+
+// Đổi ô Deadline thành Date (UTC 00:00). Nhận: ô kiểu ngày, số serial Excel, yyyy-mm-dd, dd/mm/yyyy, dd-mm-yyyy, dd.mm.yyyy
+// Trả về: Date = hợp lệ | null = để trống | undefined = KHÔNG hợp lệ
+const parseExcelDeadline = (raw) => {
+  if (raw === null || raw === undefined || raw === '') return null;
+  let v = raw;
+  if (typeof v === 'object' && !(v instanceof Date)) v = v.result !== undefined ? v.result : v.text;
+  if (v === null || v === undefined || v === '') return null;
+
+  if (v instanceof Date) return Number.isNaN(v.getTime()) ? undefined : v;
+
+  if (typeof v === 'number') {
+    const d = new Date(Math.round((v - 25569) * 86400000));
+    return Number.isNaN(d.getTime()) ? undefined : d;
+  }
+
+  const s = String(v).trim();
+  if (!s) return null;
+
+  let y;
+  let mo;
+  let d;
+  let m = s.match(/^(\d{4})[-/.](\d{1,2})[-/.](\d{1,2})/);
+  if (m) {
+    y = Number(m[1]);
+    mo = Number(m[2]);
+    d = Number(m[3]);
+  } else {
+    m = s.match(/^(\d{1,2})[-/.](\d{1,2})[-/.](\d{4})$/);
+    if (!m) return undefined;
+    d = Number(m[1]);
+    mo = Number(m[2]);
+    y = Number(m[3]);
+  }
+  const date = new Date(Date.UTC(y, mo - 1, d));
+  if (date.getUTCFullYear() !== y || date.getUTCMonth() !== mo - 1 || date.getUTCDate() !== d) return undefined;
+  return date;
+};
+
+// Độ ưu tiên: nhận low/medium/high và cả thấp / trung bình / cao. Không nhận ra -> medium như cũ
+const PRIORITY_MAP = {
+  low: 'low',
+  thap: 'low',
+  medium: 'medium',
+  'trung binh': 'medium',
+  high: 'high',
+  cao: 'high',
+};
+const parsePriority = (raw) => PRIORITY_MAP[normalizeHeader(raw)] || 'medium';
+
 exports.importTasksFromExcel = async (filePath, groupId, creatorId) => {
   const creatorMembership = await groupRepository.findMembership(creatorId, groupId);
   if (!creatorMembership) {
@@ -321,15 +452,27 @@ exports.importTasksFromExcel = async (filePath, groupId, creatorId) => {
 
   const workbook = new ExcelJS.Workbook();
   await workbook.xlsx.readFile(filePath);
-  const sheet = workbook.worksheets[0];
+  const sheet = pickImportSheet(workbook);
+  if (!sheet) {
+    throw new AppError('File Excel không có sheet nào', 400);
+  }
+
+  // MỚI SỬA: tìm cột theo TIÊU ĐỀ thay vì cố định cột 1..8
+  const header = findImportHeader(sheet);
+  if (!header) {
+    throw new AppError(
+      `Không tìm thấy cột "${IMPORT_REQUIRED_LABEL}" trong sheet "${sheet.name}". Hãy kiểm tra dòng tiêu đề (không được xóa hoặc đổi tên cột này).`,
+      400
+    );
+  }
+  const { headerRowNumber, columns } = header;
+  const cellOf = (row, field) =>
+    columns[field] === undefined ? undefined : row.getCell(columns[field]).value;
 
   let milestones = await milestoneRepository.findByGroup(groupId);
 
-  // MỚI THÊM: chuẩn bị dữ liệu để tra cứu "công việc cha" theo TÊN - dùng cho cột "Thuộc công việc cha"
-  // Bước 1: lấy toàn bộ task CẤP CAO NHẤT đã có sẵn trong nhóm (taskRepository.findByGroup vốn đã lọc
-  // parentTaskId: null từ trước) - CHỈ những task này mới được phép làm cha, đúng luật "Subtask chỉ sâu 1 cấp"
+  // Tra cứu "công việc cha" theo TÊN (chỉ task cấp cao mới được làm cha - luật Subtask sâu 1 cấp)
   const existingTopTasks = await taskRepository.findByGroup(groupId);
-  // Map: tên công việc (viết thường, đã trim) -> { id, milestoneId } - để tra cứu nhanh + biết milestoneId cần kế thừa
   const titleToTask = new Map();
   existingTopTasks.forEach((t) =>
     titleToTask.set(t.title.toLowerCase().trim(), { id: t.id, milestoneId: t.milestoneId })
@@ -339,21 +482,29 @@ exports.importTasksFromExcel = async (filePath, groupId, creatorId) => {
   const errors = [];
   const createdMilestoneNames = [];
 
-  for (let rowNumber = 2; rowNumber <= sheet.rowCount; rowNumber++) {
+  for (let rowNumber = headerRowNumber + 1; rowNumber <= sheet.rowCount; rowNumber++) {
     const row = sheet.getRow(rowNumber);
-    const title = row.getCell(1).value;
-    const description = row.getCell(2).value;
-    const email = row.getCell(3).value;
-    const priority = row.getCell(4).value;
-    const deadline = row.getCell(5).value;
-    const milestoneName = row.getCell(6).value;
-    const tagsCell = row.getCell(7).value;
-    const parentTitle = row.getCell(8).value; // MỚI THÊM: cột "Thuộc công việc cha"
-
+    const title = cellText(cellOf(row, 'title'));
     if (!title) continue;
 
-    let assignedTo = null;
+    const description = cellText(cellOf(row, 'description'));
+    const email = cellText(cellOf(row, 'email'));
+    const priority = parsePriority(cellOf(row, 'priority'));
+    const milestoneName = cellText(cellOf(row, 'milestone'));
+    const tagsText = cellText(cellOf(row, 'tags'));
+    const parentTitle = cellText(cellOf(row, 'parent'));
 
+    // Deadline sai định dạng -> báo lỗi đúng dòng đó (trước đây làm cả lần import bị lỗi 500)
+    const deadline = parseExcelDeadline(cellOf(row, 'deadline'));
+    if (deadline === undefined) {
+      errors.push({
+        row: rowNumber,
+        error: `Deadline "${cellText(cellOf(row, 'deadline'))}" không hợp lệ (dùng yyyy-mm-dd hoặc dd/mm/yyyy)`,
+      });
+      continue;
+    }
+
+    let assignedTo = null;
     if (email) {
       const membership = await groupRepository.findMemberByEmail(groupId, email);
       if (!membership) {
@@ -363,17 +514,16 @@ exports.importTasksFromExcel = async (filePath, groupId, creatorId) => {
       assignedTo = membership.userId;
     }
 
-    const tagNames = tagsCell
-      ? String(tagsCell)
+    const tagNames = tagsText
+      ? tagsText
           .split(',')
           .map((t) => t.trim())
           .filter((t) => t.length > 0)
       : [];
 
-    // MỚI THÊM: nếu dòng này có ghi "Thuộc công việc cha" -> tạo thành SUBTASK thay vì task cấp cao
+    // Có "Thuộc công việc cha" -> tạo SUBTASK (kế thừa milestoneId của task cha)
     if (parentTitle) {
-      const parentKey = String(parentTitle).toLowerCase().trim();
-      const parent = titleToTask.get(parentKey);
+      const parent = titleToTask.get(parentTitle.toLowerCase().trim());
 
       if (!parent) {
         errors.push({
@@ -383,14 +533,12 @@ exports.importTasksFromExcel = async (filePath, groupId, creatorId) => {
         continue;
       }
 
-      // Subtask TỰ ĐỘNG kế thừa milestoneId từ task cha - bỏ qua giá trị ở cột "Tên mốc" của chính dòng này
-      // (giống hệt luật khi tạo Subtask bằng tay qua giao diện, xem task.service.js -> exports.createSubtask)
       await taskRepository.createWithTags(
         {
-          title: String(title),
-          description: description ? String(description) : null,
-          priority: ['low', 'medium', 'high'].includes(priority) ? priority : 'medium',
-          deadline: deadline ? new Date(deadline) : null,
+          title,
+          description: description || null,
+          priority,
+          deadline,
           groupId,
           assignedTo,
           milestoneId: parent.milestoneId,
@@ -400,10 +548,10 @@ exports.importTasksFromExcel = async (filePath, groupId, creatorId) => {
         tagNames
       );
       createdCount++;
-      continue; // xong dòng này, KHÔNG chạy tiếp xuống nhánh tạo task cấp cao bên dưới
+      continue;
     }
 
-    // Nhánh cũ: tạo task CẤP CAO bình thường (không có công việc cha)
+    // Task CẤP CAO bình thường
     let milestoneId = null;
     if (milestoneName) {
       milestoneId = await resolveMilestonePath(milestoneName, groupId, milestones, createdMilestoneNames);
@@ -411,10 +559,10 @@ exports.importTasksFromExcel = async (filePath, groupId, creatorId) => {
 
     const newTask = await taskRepository.createWithTags(
       {
-        title: String(title),
-        description: description ? String(description) : null,
-        priority: ['low', 'medium', 'high'].includes(priority) ? priority : 'medium',
-        deadline: deadline ? new Date(deadline) : null,
+        title,
+        description: description || null,
+        priority,
+        deadline,
         groupId,
         assignedTo,
         milestoneId,
@@ -424,12 +572,11 @@ exports.importTasksFromExcel = async (filePath, groupId, creatorId) => {
     );
     createdCount++;
 
-    // MỚI THÊM: đăng ký ngay task vừa tạo vào titleToTask - để CÁC DÒNG PHÍA DƯỚI trong cùng file
-    // có thể lấy nó làm "công việc cha" luôn, không cần task đó phải có sẵn từ trước khi import
-    titleToTask.set(String(title).toLowerCase().trim(), { id: newTask.id, milestoneId: newTask.milestoneId });
+    // Đăng ký task vừa tạo để các dòng phía dưới dùng làm "công việc cha"
+    titleToTask.set(title.toLowerCase().trim(), { id: newTask.id, milestoneId: newTask.milestoneId });
   }
 
-  // MỚI THÊM: ghi 1 dòng lịch sử cho cả lần import (không ghi từng task để tránh tràn lịch sử)
+  // Ghi 1 dòng lịch sử cho cả lần import
   if (createdCount > 0) {
     await activityService.log({
       groupId,
@@ -447,53 +594,161 @@ exports.importTasksFromExcel = async (filePath, groupId, creatorId) => {
   };
 };
 
-exports.generateTemplate = async () => {
-  const workbook = new ExcelJS.Workbook();
-  const sheet = workbook.addWorksheet('Danh sách task');
+// ===== MỚI SỬA: FILE MẪU IMPORT CÓ SẴN MENU CHỌN =====
+const TEMPLATE_LAST_ROW = 300; // số dòng được gắn menu / kiểm tra
 
-  // MỚI SỬA: giảm bớt width của vài cột tiêu đề dài (46/55 -> 34/36) - vì giờ chữ đã tự XUỐNG DÒNG
-  // (nhờ wrapText bên dưới) nên không cần kéo cột quá rộng để chứa hết chữ trên 1 dòng nữa
+// Dựng danh sách đường dẫn mốc dạng "Mốc cha > Mốc con" từ danh sách mốc phẳng của nhóm
+const buildMilestonePaths = (flat) => {
+  const byId = new Map(flat.map((m) => [m.id, m]));
+  const pathOf = (m) => {
+    const names = [];
+    let cur = m;
+    let guard = 0;
+    while (cur && guard < 10) {
+      names.unshift(cur.title);
+      cur = cur.parentId ? byId.get(cur.parentId) : null;
+      guard++;
+    }
+    return names.join(' > ');
+  };
+  return flat.map(pathOf).sort((a, b) => a.localeCompare(b, 'vi'));
+};
+
+exports.generateTemplate = async (groupId, actorId) => {
+  // Có groupId thì kiểm tra quyền xem nhóm rồi lấy thành viên + mốc của nhóm đó để làm menu chọn
+  let memberEmails = [];
+  let milestonePaths = [];
+  if (groupId) {
+    await ensureCanViewGroup(actorId, groupId);
+    const members = await groupRepository.getMembers(groupId);
+    memberEmails = members
+      .filter((m) => m.status === 'ACCEPTED' && m.user && m.user.email)
+      .map((m) => m.user.email);
+    milestonePaths = buildMilestonePaths(await milestoneRepository.findByGroup(groupId));
+  }
+
+  const workbook = new ExcelJS.Workbook();
+  const sheet = workbook.addWorksheet('Danh sách task', { views: [{ state: 'frozen', ySplit: 1 }] });
+
+  // Tiêu đề NGẮN (import đọc theo tên cột nên không cần ghi hướng dẫn dài trong ô tiêu đề)
   sheet.columns = [
-    { header: 'Tên công việc', key: 'title', width: 26 },
-    { header: 'Mô tả', key: 'description', width: 32 },
-    { header: 'Email người phụ trách', key: 'email', width: 22 },
-    { header: 'Độ ưu tiên (low/medium/high)', key: 'priority', width: 18 },
-    { header: 'Deadline (yyyy-mm-dd)', key: 'deadline', width: 16 },
-    { header: 'Tên mốc (để trống nếu không có; gõ "Mốc cha > Mốc con" để tạo mốc con)', key: 'milestone', width: 34 },
-    { header: 'Nhãn (nhiều nhãn cách nhau bằng dấu phẩy, để trống nếu không có)', key: 'tags', width: 30 },
-    // MỚI THÊM: cột thứ 8 - tạo Subtask bằng cách ghi đúng tên 1 công việc cha
-    { header: 'Thuộc công việc cha (để trống nếu là công việc chính; gõ đúng Tên công việc cha để biến dòng này thành công việc CON)', key: 'parentTitle', width: 36 },
+    { header: 'Tên công việc', key: 'title', width: 30 },
+    { header: 'Mô tả', key: 'description', width: 34 },
+    { header: 'Email người phụ trách', key: 'email', width: 30 },
+    { header: 'Độ ưu tiên', key: 'priority', width: 14 },
+    { header: 'Deadline', key: 'deadline', width: 14 },
+    { header: 'Tên mốc', key: 'milestone', width: 36 },
+    { header: 'Nhãn', key: 'tags', width: 22 },
+    { header: 'Thuộc công việc cha', key: 'parentTitle', width: 30 },
+    { header: 'Kiểm tra', key: 'check', width: 30 },
   ];
 
-  // MỚI SỬA: thêm alignment wrapText - chữ tiêu đề dài giờ tự XUỐNG DÒNG bên trong ô thay vì tràn ra ngoài
-  // horizontal/vertical: căn giữa cho đẹp khi có nhiều dòng; row height tăng lên để đủ chỗ hiển thị 2-3 dòng chữ
-  sheet.getRow(1).font = { bold: true };
-  sheet.getRow(1).alignment = { wrapText: true, vertical: 'middle', horizontal: 'left' };
-  sheet.getRow(1).height = 45;
+  // Sheet ẩn "Danh mục": nguồn dữ liệu cho các menu chọn
+  const lists = workbook.addWorksheet('Danh mục');
+  lists.getCell('A1').value = 'Email thành viên';
+  lists.getCell('B1').value = 'Mốc hiện có';
+  memberEmails.forEach((e, i) => { lists.getCell(`A${i + 2}`).value = e; });
+  milestonePaths.forEach((p, i) => { lists.getCell(`B${i + 2}`).value = p; });
+  lists.state = 'hidden';
 
-  // MỚI SỬA: 2 dòng ví dụ mẫu - dòng 1 là công việc cha, dòng 2 là công việc CON của dòng 1 (dùng đúng tên ở dòng 1)
-  sheet.addRow({
-    title: 'Viết mục tiêu đề tài',
-    description: 'Nêu rõ mục tiêu nghiên cứu',
-    email: '',
-    priority: 'medium',
-    deadline: '',
-    milestone: 'Đề cương > Chương 1',
-    tags: '',
-    parentTitle: '',
+  // Tiêu đề: cột bắt buộc màu đậm, cột tùy chọn màu nhạt; ghi chú hướng dẫn hiện khi rê chuột
+  const headerNotes = {
+    A1: 'BẮT BUỘC. Tên công việc.',
+    C1: 'Chọn trong menu (chỉ thành viên của nhóm). Để trống nếu chưa giao.',
+    D1: 'Chọn low / medium / high. Để trống = medium.',
+    E1: 'Nhập ngày dạng dd/mm/yyyy. Để trống nếu không có hạn.',
+    F1: 'Chọn mốc có sẵn, hoặc gõ mốc mới. Mốc con: gõ "Mốc cha > Mốc con". Việc con không cần điền (tự theo việc cha).',
+    G1: 'Nhiều nhãn cách nhau bằng dấu phẩy.',
+    H1: 'Để trống nếu là việc chính. Muốn là việc CON: chọn tên việc cha (việc cha phải nằm ở dòng phía TRÊN).',
+    I1: 'Cột tự kiểm tra, hệ thống không đọc cột này.',
+  };
+  const header = sheet.getRow(1);
+  header.height = 30;
+  header.eachCell((cell) => {
+    const required = cell.address === 'A1';
+    cell.font = { bold: true, color: { argb: required ? 'FFFFFFFF' : 'FF1F2937' } };
+    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: required ? 'FFE5484D' : 'FFE5E7EB' } };
+    cell.alignment = { vertical: 'middle', wrapText: true };
+    if (headerNotes[cell.address]) cell.note = headerNotes[cell.address];
   });
-  sheet.addRow({
-    title: 'Viết đặt vấn đề',
-    description: 'Phần mở đầu của mục tiêu đề tài',
-    email: '',
-    priority: 'low',
-    deadline: '',
-    milestone: '',
-    tags: '',
-    parentTitle: 'Viết mục tiêu đề tài', // MỚI THÊM: chính là tên task ở dòng ví dụ ngay phía trên
+
+  // 2 dòng ví dụ: dòng 2 là việc chính, dòng 3 là việc CON của dòng 2
+  sheet.addRow({ title: 'Viết mục tiêu đề tài', description: 'Nêu rõ mục tiêu nghiên cứu', priority: 'medium', milestone: 'Đề cương > Chương 1' });
+  sheet.addRow({ title: 'Viết đặt vấn đề', description: 'Phần mở đầu của mục tiêu đề tài', priority: 'low', parentTitle: 'Viết mục tiêu đề tài' });
+  [2, 3].forEach((r) => { sheet.getRow(r).font = { italic: true, color: { argb: 'FF9CA0A8' } }; });
+
+  const emailRange = memberEmails.length > 0 ? `'Danh mục'!$A$2:$A$${memberEmails.length + 1}` : null;
+  const milestoneRange = milestonePaths.length > 0 ? `'Danh mục'!$B$2:$B$${milestonePaths.length + 1}` : null;
+
+  for (let r = 2; r <= TEMPLATE_LAST_ROW; r++) {
+    // Email: chỉ chọn thành viên của nhóm
+    if (emailRange) {
+      sheet.getCell(`C${r}`).dataValidation = {
+        type: 'list', allowBlank: true, formulae: [emailRange],
+        showErrorMessage: true, errorStyle: 'stop',
+        errorTitle: 'Email không hợp lệ', error: 'Hãy chọn email của một thành viên trong nhóm.',
+      };
+    }
+    // Độ ưu tiên
+    sheet.getCell(`D${r}`).dataValidation = {
+      type: 'list', allowBlank: true, formulae: ['"low,medium,high"'],
+      showErrorMessage: true, errorStyle: 'stop',
+      errorTitle: 'Độ ưu tiên', error: 'Chọn low, medium hoặc high.',
+    };
+    // Deadline: chỉ nhận ngày hợp lệ
+    sheet.getCell(`E${r}`).numFmt = 'dd/mm/yyyy';
+    sheet.getCell(`E${r}`).dataValidation = {
+      type: 'date', operator: 'greaterThan', allowBlank: true, formulae: [new Date(Date.UTC(2000, 0, 1))],
+      showErrorMessage: true, errorStyle: 'stop',
+      errorTitle: 'Deadline', error: 'Nhập ngày hợp lệ, ví dụ 15/11/2026.',
+    };
+    // Mốc: chọn mốc có sẵn, vẫn cho gõ mốc mới (errorStyle information)
+    if (milestoneRange) {
+      sheet.getCell(`F${r}`).dataValidation = {
+        type: 'list', allowBlank: true, formulae: [milestoneRange],
+        showErrorMessage: true, errorStyle: 'information',
+        errorTitle: 'Mốc mới', error: 'Mốc này chưa có, hệ thống sẽ tự tạo mới khi import.',
+      };
+    }
+    // Việc cha: chọn từ các tên ở cột A (cho phép gõ việc cha đã có sẵn trên hệ thống)
+    sheet.getCell(`H${r}`).dataValidation = {
+      type: 'list', allowBlank: true, formulae: [`$A$2:$A$${TEMPLATE_LAST_ROW}`],
+      showErrorMessage: true, errorStyle: 'warning',
+      errorTitle: 'Việc cha', error: 'Tên này chưa có trong cột Tên công việc. Vẫn dùng nếu việc cha đã có sẵn trên hệ thống?',
+    };
+    // Cột Kiểm tra: tự báo lỗi thường gặp ngay trong Excel
+    const emailCheck = emailRange ? `IF(AND(C${r}<>"",COUNTIF(${emailRange},C${r})=0),"Email không thuộc nhóm",` : 'IF(FALSE,"",';
+    sheet.getCell(`I${r}`).value = {
+      formula: `IF(A${r}="","",${emailCheck}IF(AND(H${r}<>"",COUNTIF($A$1:A${r - 1},H${r})=0),"Việc cha không nằm ở dòng phía trên","OK")))`,
+    };
+  }
+
+  // Tô đỏ ô Kiểm tra khi có lỗi
+  sheet.addConditionalFormatting({
+    ref: `I2:I${TEMPLATE_LAST_ROW}`,
+    rules: [{
+      type: 'expression', formulae: ['AND(I2<>"",I2<>"OK")'],
+      style: { font: { color: { argb: 'FFB42318' }, bold: true } },
+    }],
   });
-  sheet.getRow(2).font = { italic: true, color: { argb: 'FF9CA0A8' } };
-  sheet.getRow(3).font = { italic: true, color: { argb: 'FF9CA0A8' } };
+
+  // Sheet hướng dẫn ngắn (đặt SAU sheet dữ liệu)
+  const guide = workbook.addWorksheet('Hướng dẫn');
+  guide.getColumn(1).width = 100;
+  [
+    'CÁCH ĐIỀN FILE IMPORT',
+    '1. Chỉ điền ở sheet "Danh sách task". Dòng 2 và 3 là ví dụ, có thể xóa.',
+    '2. Cột Tên công việc là bắt buộc. Các cột còn lại có thể để trống.',
+    '3. Email, Độ ưu tiên, Mốc, Việc cha: bấm vào ô rồi chọn trong mũi tên xổ xuống.',
+    '4. Việc CON: chọn tên việc cha ở cột "Thuộc công việc cha". Việc cha phải nằm ở dòng phía trên.',
+    '5. Cột Kiểm tra tự báo lỗi (chữ đỏ). Sửa hết rồi mới import. Cột này hệ thống không đọc.',
+    '6. Đừng xóa hay đổi tên cột "Tên công việc". Các cột khác có thể đổi vị trí.',
+  ].forEach((t, i) => {
+    const c = guide.getCell(`A${i + 1}`);
+    c.value = t;
+    c.alignment = { wrapText: true };
+    if (i === 0) c.font = { bold: true };
+  });
 
   return workbook;
 };
@@ -664,7 +919,7 @@ exports.createSubtask = async (parentTaskId, creatorId, subtaskData) => {
     throw new AppError('Bạn không thuộc nhóm này', 403);
   }
 
-  const { assignedTo, tagNames = [], ...restData } = subtaskData;
+  const { assignedTo, tagNames = [], deadline, ...restData } = subtaskData;
 
   if (assignedTo) {
     const assigneeMembership = await groupRepository.findMembership(assignedTo, parentTask.groupId);
@@ -676,6 +931,7 @@ exports.createSubtask = async (parentTaskId, creatorId, subtaskData) => {
   const subtask = await taskRepository.createWithTags(
     {
       ...restData,
+      deadline: parseDeadline(deadline),
       groupId: parentTask.groupId,
       milestoneId: parentTask.milestoneId,
       parentTaskId: parentTask.id,

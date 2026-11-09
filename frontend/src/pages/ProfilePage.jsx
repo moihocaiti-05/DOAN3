@@ -13,7 +13,12 @@ const ROLE_LABEL = { SINH_VIEN: 'Sinh viên', GIANG_VIEN: 'Giảng viên' };
 const GROUP_ROLE_LABEL = { leader: 'Trưởng nhóm', supervisor: 'Giảng viên hướng dẫn', member: 'Thành viên' };
 
 // Chữ cái đầu của tên, dùng làm ảnh đại diện khi chưa có ảnh (giữ cách cũ của trang)
-const getInitials = (name) => name?.slice(0, 2).toUpperCase() || '??';
+const getInitials = (name) => {
+  const words = (name || '').trim().split(/\s+/).filter(Boolean);
+  if (words.length === 0) return '??';
+  if (words.length === 1) return words[0].slice(0, 2).toUpperCase();
+  return (words[0][0] + words[words.length - 1][0]).toUpperCase();
+};
 
 // Đổi ngày tạo tài khoản thành "MM/YYYY"; ngày hỏng hoặc thiếu thì trả chuỗi rỗng để ẩn dòng "Tham gia từ"
 const formatJoined = (value) => {
